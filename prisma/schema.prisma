@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,20 +7,117 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model Category {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  name        String
+  description String
+  image       String?
+  icon        String?
+  order       Int       @default(0)
+  isHero      Boolean   @default(false)
+  products    Product[]
 }
 
-model Post {
+model Product {
+  id           String    @id @default(cuid())
+  slug         String    @unique
+  name         String
+  brand        String
+  categoryId   String
+  category     Category  @relation(fields: [categoryId], references: [id])
+  tagline      String
+  description  String
+  usage        String?
+  image        String
+  badges       String    @default("[]") // JSON string array (SQLite: no scalar lists)
+  nutrition    String? // JSON string: { rows: [{ label, value }] }
+  rating       Float     @default(0)
+  reviewCount  Int       @default(0)
+  isBestseller Boolean   @default(false)
+  isFeatured   Boolean   @default(false)
+  sortOrder    Int       @default(0)
+  flavors      Flavor[]
+  sizes        Size[]
+  reviews      Review[]
+}
+
+model Flavor {
+  id          String  @id @default(cuid())
+  productId   String
+  product     Product @relation(fields: [productId], references: [id])
+  name        String
+  color       String // hex swatch
+  inStock     Boolean @default(true)
+  rating      Float?
+  reviewCount Int     @default(0)
+  sortOrder   Int     @default(0)
+}
+
+model Size {
+  id           String  @id @default(cuid())
+  productId    String
+  product      Product @relation(fields: [productId], references: [id])
+  label        String
+  sublabel     String?
+  price        Float
+  comparePrice Float?
+  servings     Int?
+  popular      Boolean @default(false)
+  sortOrder    Int     @default(0)
+}
+
+model Review {
   id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  author    String
+  rating    Float
+  flavor    String?
   title     String
-  content   String?
-  published Boolean  @default(false)
-  authorId  String
+  text      String
+  verified  Boolean  @default(true)
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+}
+
+model Order {
+  id             String      @id @default(cuid())
+  orderNumber    String      @unique
+  email          String
+  firstName      String
+  lastName       String
+  street         String
+  zip            String
+  city           String
+  country        String
+  shippingMethod String
+  shippingCost   Float
+  paymentMethod  String
+  promoCode      String?
+  discount       Float       @default(0)
+  subtotal       Float
+  total          Float
+  status         String      @default("confirmed")
+  createdAt      DateTime    @default(now())
+  items          OrderItem[]
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id])
+  productId String
+  name      String
+  brand     String
+  image     String
+  flavor    String
+  sizeLabel String
+  unitPrice Float
+  quantity  Int
+}
+
+model NewsletterSubscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
 }

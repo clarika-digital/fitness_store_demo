@@ -1,0 +1,663 @@
+     1→     1→/**
+     2→     2→ * Seed script for the FUELD fitness supplement store.
+     3→     3→ * Run: bun prisma/seed.ts
+     4→     4→ */
+     5→     5→import { PrismaClient } from '@prisma/client'
+     6→     6→
+     7→     7→const db = new PrismaClient()
+     8→     8→
+     9→     9→async function main() {
+    10→    10→  // wipe in FK-safe order
+    11→    11→  await db.orderItem.deleteMany()
+    12→    12→  await db.order.deleteMany()
+    13→    13→  await db.newsletterSubscriber.deleteMany()
+    14→    14→  await db.review.deleteMany()
+    15→    15→  await db.flavor.deleteMany()
+    16→    16→  await db.size.deleteMany()
+    17→    17→  await db.product.deleteMany()
+    18→    18→  await db.category.deleteMany()
+    19→    19→
+    20→    20→  const cat = (
+    21→    21→    slug: string,
+    22→    22→    name: string,
+    23→    23→    description: string,
+    24→    24→    order: number,
+    25→    25→    isHero = false,
+    26→    26→    icon?: string,
+    27→    27→    image?: string
+    28→    28→  ) =>
+    29→    29→    db.category.create({
+    30→    30→      data: { slug, name, description, order, isHero, icon, image },
+    31→    31→    })
+    32→    32→
+    33→    33→  const protein = await cat(
+    34→    34→    'protein',
+    35→    35→    'Protein',
+    36→    36→    'Whey protein, isolates & vegan blends — the foundation of every training goal. Highest quality, fully soluble, insane flavor range.',
+    37→    37→    0,
+    38→    38→    true,
+    39→    39→    'Dumbbell',
+    40→    40→    '/images/products/designer-whey.png'
+    41→    41→  )
+    42→    42→  const preworkout = await cat(
+    43→    43→    'pre-workout',
+    44→    44→    'Pre-Workout',
+    45→    45→    'Booster and pump supplements for maximum focus, energy and training performance.',
+    46→    46→    1,
+    47→    47→    false,
+    48→    48→    'Zap',
+    49→    49→    '/images/products/ultra-booster.png'
+    50→    50→  )
+    51→    51→  const creatine = await cat(
+    52→    52→    'creatine',
+    53→    53→    'Creatine',
+    54→    54→    'Creapure® creatine monohydrate — the most researched supplement in sports nutrition.',
+    55→    55→    2,
+    56→    56→    false,
+    57→    57→    'Dumbbell',
+    58→    58→    '/images/products/creatine.png'
+    59→    59→  )
+    60→    60→  const amino = await cat(
+    61→    61→    'amino',
+    62→    62→    'Amino Acids',
+    63→    63→    'EAAs, citrulline and more — for recovery, pump and muscle protection.',
+    64→    64→    3,
+    65→    65→    false,
+    66→    66→    'Activity',
+    67→    67→    '/images/products/eaa.png'
+    68→    68→  )
+    69→    69→  const vitamins = await cat(
+    70→    70→    'vitamins',
+    71→    71→    'Vitamins & Health',
+    72→    72→    'ZMA, minerals and micronutrients to cover your daily basics.',
+    73→    73→    4,
+    74→    74→    false,
+    75→    75→    'ShieldCheck',
+    76→    76→    '/images/products/zma.png'
+    77→    77→  )
+    78→    78→  const accessories = await cat(
+    79→    79→    'accessories',
+    80→    80→    'Accessories',
+    81→    81→    'Shakers and everything around your shaker cup.',
+    82→    82→    5,
+    83→    83→    false,
+    84→    84→    'GlassWater',
+    85→    85→    '/images/products/shaker.png'
+    86→    86→  )
+    87→    87→  const bundles = await cat(
+    88→    88→    'bundles',
+    89→    89→    'Bundles & Sets',
+    90→    90→    'Curated stacks at a better price — the easy way to start.',
+    91→    91→    6,
+    92→    92→    false,
+    93→    93→    'Package',
+    94→    94→    '/images/products/starter-bundle.png'
+    95→    95→  )
+    96→    96→
+    97→    97→  type FlavorSeed = { name: string; color: string; inStock?: boolean; rating?: number; reviewCount?: number }
+    98→    98→  type SizeSeed = { label: string; sublabel?: string; price: number; comparePrice?: number; servings?: number; popular?: boolean }
+    99→    99→  type ReviewSeed = { author: string; rating: number; flavor?: string; title: string; text: string }
+   100→   100→
+   101→   101→  const product = async (data: {
+   102→   102→    slug: string
+   103→   103→    name: string
+   104→   104→    brand: string
+   105→   105→    categoryId: string
+   106→   106→    tagline: string
+   107→   107→    description: string
+   108→   108→    usage?: string
+   109→   109→    image: string
+   110→   110→    badges?: string[]
+   111→   111→    nutrition?: { label: string; value: string }[]
+   112→   112→    rating: number
+   113→   113→    reviewCount: number
+   114→   114→    isBestseller?: boolean
+   115→   115→    isFeatured?: boolean
+   116→   116→    sortOrder: number
+   117→   117→    flavors?: FlavorSeed[]
+   118→   118→    sizes: SizeSeed[]
+   119→   119→    reviews?: ReviewSeed[]
+   120→   120→  }) => {
+   121→   121→    const { flavors, sizes, reviews, badges, nutrition, ...rest } = data
+   122→   122→    const p = await db.product.create({
+   123→   123→      data: {
+   124→   124→        ...rest,
+   125→   125→        badges: JSON.stringify(badges ?? []),
+   126→   126→        nutrition: nutrition ? JSON.stringify({ rows: nutrition }) : null,
+   127→   127→        flavors: { create: (flavors ?? []).map((f, i) => ({ ...f, sortOrder: i })) },
+   128→   128→        sizes: { create: sizes.map((s, i) => ({ ...s, sortOrder: i })) },
+   129→   129→      },
+   130→   130→    })
+   131→   131→    if (reviews?.length) {
+   132→   132→      await db.review.createMany({
+   133→   133→        data: reviews.map((r) => ({ ...r, productId: p.id })),
+   134→   134→      })
+   135→   135→    }
+   136→   136→    return p
+   137→   137→  }
+   138→   138→
+   139→   139→  // ─────────────────────────── PROTEIN ───────────────────────────
+   140→   140→
+   141→   141→  await product({
+   142→   142→    slug: 'esn-designer-whey',
+   143→   143→    name: 'Designer Whey',
+   144→   144→    brand: 'ESN',
+   145→   145→    categoryId: protein.id,
+   146→   146→    tagline: 'The #1 whey protein — 76% protein, perfectly soluble, legendary flavor range.',
+   147→   147→    description:
+   148→   148→      'Designer Whey is ESN\u2019s flagship whey concentrate and one of the best-selling protein powders in Europe. It delivers 76% high-quality whey protein per serving, mixes instantly with water or low-fat milk without clumping, and comes in one of the widest flavor ranges on the market \u2014 from classic Chocolate Shake to Cinnamon Cereal. Every batch is produced in Germany under strict quality standards and regularly lab-tested. If you want one protein that covers muscle building, recovery and everyday protein needs, this is it.',
+   149→   149→    usage:
+   150→   150→      'Mix one 30 g scoop with 300 ml water or low-fat milk. Ideal after training or any time of day when you need extra protein.',
+   151→   151→    image: '/images/products/designer-whey.png',
+   152→   152→    badges: ['Bestseller', '#1 Whey'],
+   153→   153→    rating: 4.8,
+   154→   154→    reviewCount: 2841,
+   155→   155→    isBestseller: true,
+   156→   156→    isFeatured: true,
+   157→   157→    sortOrder: 0,
+   158→   158→    flavors: [
+   159→   159→      { name: 'Vanilla Shake', color: '#f0e3c0', rating: 4.8, reviewCount: 604 },
+   160→   160→      { name: 'Chocolate Shake', color: '#5a3a26', rating: 4.9, reviewCount: 812 },
+   161→   161→      { name: 'Strawberry Shake', color: '#e86a75', rating: 4.7, reviewCount: 388 },
+   162→   162→      { name: 'Cookies & Cream', color: '#4a4038', rating: 4.8, reviewCount: 521 },
+   163→   163→      { name: 'Banana Shake', color: '#f0c95c', rating: 4.6, reviewCount: 214 },
+   164→   164→      { name: 'Salted Caramel', color: '#c68a3f', rating: 4.8, reviewCount: 297 },
+   165→   165→      { name: 'Hazelnut', color: '#7a5230', rating: 4.7, reviewCount: 186 },
+   166→   166→      { name: 'Mango', color: '#f5a04a', inStock: false, rating: 4.5, reviewCount: 98 },
+   167→   167→    ],
+   168→   168→    sizes: [
+   169→   169→      { label: '1 kg', sublabel: '33 servings', price: 29.9, comparePrice: 34.9, servings: 33 },
+   170→   170→      { label: '2.5 kg', sublabel: '83 servings', price: 64.9, comparePrice: 74.9, servings: 83, popular: true },
+   171→   171→    ],
+   172→   172→    nutrition: [
+   173→   173→      { label: 'Energy', value: '1531 kJ / 366 kcal' },
+   174→   174→      { label: 'Fat', value: '5.5 g' },
+   175→   175→      { label: 'of which saturates', value: '2.1 g' },
+   176→   176→      { label: 'Carbohydrates', value: '4.5 g' },
+   177→   177→      { label: 'of which sugars', value: '3.2 g' },
+   178→   178→      { label: 'Protein', value: '76 g' },
+   179→   179→      { label: 'Salt', value: '0.48 g' },
+   180→   180→    ],
+   181→   181→    reviews: [
+   182→   182→      {
+   183→   183→        author: 'Jonas M.',
+   184→   184→        rating: 5,
+   185→   185→        flavor: 'Chocolate Shake',
+   186→   186→        title: 'Mixes perfectly, tastes incredible',
+   187→   187→        text: 'Been ordering this for two years now. Zero clumps in a shaker, even with just water. Chocolate is rich but not too sweet \u2014 my benchmark for every other whey.',
+   188→   188→      },
+   189→   189→      {
+   190→   190→        author: 'Lisa K.',
+   191→   191→        rating: 5,
+   192→   192→        flavor: 'Vanilla Shake',
+   193→   193→        title: 'Best vanilla on the market',
+   194→   194→        text: 'I\u2019ve tried six brands and always come back to Designer Whey. Vanilla tastes like actual vanilla, not like sweetener. Also easy on my stomach.',
+   195→   195→      },
+   196→   196→      {
+   197→   197→        author: 'Markus T.',
+   198→   198→        rating: 5,
+   199→   199→        flavor: 'Cookies & Cream',
+   200→   200→        title: 'Dangerously good',
+   201→   201→        text: 'Cookies & Cream is a dessert in a shaker. Macros are on point and the 2.5 kg bag lasts me almost two months.',
+   202→   202→      },
+   203→   203→      {
+   204→   204→        author: 'Sandra B.',
+   205→   205→        rating: 4,
+   206→   206→        flavor: 'Salted Caramel',
+   207→   207→        title: 'Great, slightly sweet',
+   208→   208→        text: 'Flavor and solubility are excellent. Salted Caramel is a touch too sweet for me personally, but quality is unbeatable for the price.',
+   209→   209→      },
+   210→   210→      {
+   211→   211→        author: 'Daniel R.',
+   212→   212→        rating: 5,
+   213→   213→        flavor: 'Chocolate Shake',
+   214→   214→        title: 'My daily driver since 2021',
+   215→   215→        text: '76g protein per 100g at this price \u2014 no competitor comes close. Digestion is great, no bloating, and delivery is always fast.',
+   216→   216→      },
+   217→   217→      {
+   218→   218→        author: 'Anna W.',
+   219→   219→        rating: 5,
+   220→   220→        flavor: 'Strawberry Shake',
+   221→   221→        title: 'Actually tastes like strawberries',
+   222→   222→        text: 'Not that artificial bubblegum taste you get elsewhere. Mixes clean with milk and water. Will reorder.',
+   223→   223→      },
+   224→   224→      {
+   225→   225→        author: 'Tobias H.',
+   226→   226→        rating: 5,
+   227→   227→        flavor: 'Banana Shake',
+   228→   228→        title: 'Reliable quality',
+   229→   229→        text: 'Third bag in a row. Same taste every time \u2014 consistency is what keeps me here.',
+   230→   230→      },
+   231→   231→      {
+   232→   232→        author: 'Elena S.',
+   233→   233→        rating: 4,
+   234→   234→        flavor: 'Hazelnut',
+   235→   235→        title: 'Solid, great value',
+   236→   236→        text: 'Hazelnut is subtle and nice with milk. I wish there were smaller trial sizes, but the sample box solved that.',
+   237→   237→      },
+   238→   238→    ],
+   239→   239→  })
+   240→   240→
+   241→   241→  await product({
+   242→   242→    slug: 'esn-isoclear',
+   243→   243→    name: 'Isoclear',
+   244→   244→    brand: 'ESN',
+   245→   245→    categoryId: protein.id,
+   246→   246→    tagline: 'Crystal-clear whey isolate — refreshes like juice, 82% protein, lactose-free.',
+   247→   247→    description:
+   248→   248→      'Isoclear turns whey isolate into a refreshing, crystal-clear drink instead of a creamy shake. With 82% protein, virtually no fat or sugar and no lactose, it\u2019s the leanest way to hit your protein target \u2014 perfect post-workout or on hot training days. Fruity flavors like Pineapple and Orange dissolve crystal-clear in water within seconds.',
+   249→   249→    usage:
+   250→   250→      'Mix one 30 g scoop with 500 ml cold water and shake briefly. Best enjoyed ice-cold after training.',
+   251→   251→    image: '/images/products/isoclear.png',
+   252→   252→    badges: ['Lactose-free', 'Low sugar'],
+   253→   253→    rating: 4.7,
+   254→   254→    reviewCount: 962,
+   255→   255→    isBestseller: true,
+   256→   256→    isFeatured: true,
+   257→   257→    sortOrder: 1,
+   258→   258→    flavors: [
+   259→   259→      { name: 'Pineapple', color: '#f2d24b', rating: 4.8, reviewCount: 341 },
+   260→   260→      { name: 'Orange', color: '#f28c28', rating: 4.7, reviewCount: 265 },
+   261→   261→      { name: 'Cherry', color: '#b3324d', rating: 4.6, reviewCount: 184 },
+   262→   262→      { name: 'Cola-Lime', color: '#5c6b3c', rating: 4.7, reviewCount: 121 },
+   263→   263→      { name: 'Elderflower', color: '#dbe4c9', rating: 4.6, reviewCount: 51 },
+   264→   264→    ],
+   265→   265→    sizes: [{ label: '1 kg', sublabel: '33 servings', price: 34.9, comparePrice: 39.9, servings: 33 }],
+   266→   266→    nutrition: [
+   267→   267→      { label: 'Energy', value: '1442 kJ / 344 kcal' },
+   268→   268→      { label: 'Fat', value: '0.9 g' },
+   269→   269→      { label: 'of which saturates', value: '0.3 g' },
+   270→   270→      { label: 'Carbohydrates', value: '1.2 g' },
+   271→   271→      { label: 'of which sugars', value: '1.0 g' },
+   272→   272→      { label: 'Protein', value: '82 g' },
+   273→   273→      { label: 'Salt', value: '0.35 g' },
+   274→   274→    ],
+   275→   275→    reviews: [
+   276→   276→      {
+   277→   277→        author: 'Patrick L.',
+   278→   278→        rating: 5,
+   279→   279→        flavor: 'Pineapple',
+   280→   280→        title: 'No more thick shakes in summer',
+   281→   281→        text: 'Drinks like fruit juice with 25 g protein. Pineapple is my summer staple \u2014 genuinely refreshing.',
+   282→   282→      },
+   283→   283→      {
+   284→   284→        author: 'Nina F.',
+   285→   285→        rating: 4,
+   286→   286→        flavor: 'Orange',
+   287→   287→        title: 'Great alternative to creamy whey',
+   288→   288→        text: 'Took a sip to get used to \u2014 it really is clear! Now I love it for post-workout. Slightly pricier than Designer Whey but worth it.',
+   289→   289→      },
+   290→   290→      {
+   291→   291→        author: 'Kevin D.',
+   292→   292→        rating: 5,
+   293→   293→        flavor: 'Cola-Lime',
+   294→   294→        title: 'Lactose-free finally',
+   295→   295→        text: 'My stomach can\u2019t handle regular whey. Isoclear works perfectly and tastes like a soft drink without the sugar.',
+   296→   296→      },
+   297→   297→    ],
+   298→   298→  })
+   299→   299→
+   300→   300→  await product({
+   301→   301→    slug: 'esn-vegan-protein',
+   302→   302→    name: 'Vegan Protein',
+   303→   303→    brand: 'ESN',
+   304→   304→    categoryId: protein.id,
+   305→   305→    tagline: '100% plant-based pea & rice blend — smooth texture, complete amino profile.',
+   306→   306→    description:
+   307→   307→      'ESN Vegan Protein combines pea and rice protein into a complete amino acid profile with a genuinely smooth texture \u2014 no chalky mouthfeel. Free from soy, lactose and gluten, sweetened naturally, and surprisingly close to whey in taste.',
+   308→   308→    usage: 'Mix one 30 g scoop with 300 ml water or plant-based drink.',
+   309→   309→    image: '/images/products/vegan-protein.png',
+   310→   310→    badges: ['Vegan', 'Soy-free'],
+   311→   311→    rating: 4.6,
+   312→   312→    reviewCount: 431,
+   313→   313→    isFeatured: false,
+   314→   314→    sortOrder: 2,
+   315→   315→    flavors: [
+   316→   316→      { name: 'Vanilla', color: '#f0e6c8', rating: 4.6, reviewCount: 154 },
+   317→   317→      { name: 'Chocolate', color: '#4e3320', rating: 4.7, reviewCount: 168 },
+   318→   318→      { name: 'Berry', color: '#a34a5e', rating: 4.5, reviewCount: 109 },
+   319→   319→    ],
+   320→   320→    sizes: [{ label: '1 kg', sublabel: '33 servings', price: 32.9, servings: 33 }],
+   321→   321→    nutrition: [
+   322→   322→      { label: 'Energy', value: '1615 kJ / 385 kcal' },
+   323→   323→      { label: 'Fat', value: '7.1 g' },
+   324→   324→      { label: 'of which saturates', value: '2.4 g' },
+   325→   325→      { label: 'Carbohydrates', value: '8.5 g' },
+   326→   326→      { label: 'of which sugars', value: '2.1 g' },
+   327→   327→      { label: 'Protein', value: '68 g' },
+   328→   328→      { label: 'Salt', value: '1.10 g' },
+   329→   329→    ],
+   330→   330→    reviews: [
+   331→   331→      {
+   332→   332→        author: 'Marta J.',
+   333→   333→        rating: 5,
+   334→   334→        flavor: 'Chocolate',
+   335→   335→        title: 'Best vegan protein I\u2019ve had',
+   336→   336→        text: 'Usually vegan proteins are chalky. This one mixes smooth and actually tastes good. finally a brand that gets it right.',
+   337→   337→      },
+   338→   338→      {
+   339→   339→        author: 'Felix N.',
+   340→   340→        rating: 4,
+   341→   341→        flavor: 'Berry',
+   342→   342→        title: 'Solid plant option',
+   343→   343→        text: 'Not quite whey level, but for a plant protein it\u2019s excellent. Berry works great with oat milk.',
+   344→   344→      },
+   345→   345→    ],
+   346→   346→  })
+   347→   347→
+   348→   348→  // ───────────────────────── PRE-WORKOUT ─────────────────────────
+   349→   349→
+   350→   350→  await product({
+   351→   351→    slug: 'esn-ultra-booster',
+   352→   352→    name: 'Ultra Booster',
+   353→   353→    brand: 'ESN',
+   354→   354→    categoryId: preworkout.id,
+   355→   355→    tagline: 'High-dose pre-workout with 250 mg caffeine, citrulline and beta-alanine.',
+   356→   356→    description:
+   357→   357→      'Ultra Booster is the strong pre-workout for hard training sessions: 250 mg caffeine per serving, 6 g citrulline malate for pump, 3.2 g beta-alanine for endurance and choline for focus. One scoop 20\u201330 minutes before training and you\u2019re locked in.',
+   358→   358→    usage:
+   359→   359→      'Mix one 12.5 g scoop with 400 ml water, 20\u201330 minutes before training. Do not exceed one serving per day.',
+   360→   360→    image: '/images/products/ultra-booster.png',
+   361→   361→    badges: ['High caffeine'],
+   362→   362→    rating: 4.7,
+   363→   363→    reviewCount: 1120,
+   364→   364→    isBestseller: true,
+   365→   365→    sortOrder: 0,
+   366→   366→    flavors: [
+   367→   367→      { name: 'Fruit Punch', color: '#d94f4f', rating: 4.7, reviewCount: 486 },
+   368→   368→      { name: 'Watermelon', color: '#e86a8a', rating: 4.8, reviewCount: 402 },
+   369→   369→      { name: 'Green Apple', color: '#7aa843', rating: 4.6, reviewCount: 232 },
+   370→   370→    ],
+   371→   371→    sizes: [{ label: '350 g', sublabel: '28 servings', price: 34.9, servings: 28 }],
+   372→   372→    nutrition: [
+   373→   373→      { label: 'Energy', value: '295 kJ / 70 kcal' },
+   374→   374→      { label: 'Carbohydrates', value: '16 g' },
+   375→   375→      { label: 'of which sugars', value: '0.4 g' },
+   376→   376→      { label: 'Caffeine (per 12.5 g serving)', value: '250 mg' },
+   377→   377→      { label: 'Citrulline malate (per serving)', value: '6.0 g' },
+   378→   378→      { label: 'Beta-alanine (per serving)', value: '3.2 g' },
+   379→   379→    ],
+   380→   380→    reviews: [
+   381→   381→      {
+   382→   382→        author: 'Ben O.',
+   383→   383→        rating: 5,
+   384→   384→        flavor: 'Fruit Punch',
+   385→   385→        title: 'Clean energy, no crash',
+   386→   386→        text: 'Kick-in after ~20 min, smooth focus without jitters. Fruit Punch tastes strong but good.',
+   387→   387→      },
+   388→   388→      {
+   389→   389→        author: 'Jana P.',
+   390→   390→        rating: 5,
+   391→   391→        flavor: 'Watermelon',
+   392→   392→        title: 'My PR booster',
+   393→   393→        text: 'Hit a 5 kg bench PR the first week. The tingles from beta-alanine take getting used to \u2014 totally normal and harmless.',
+   394→   394→      },
+   395→   395→      {
+   396→   396→        author: 'Chris V.',
+   397→   397→        rating: 4,
+   398→   398→        flavor: 'Green Apple',
+   399→   399→        title: 'Strong stuff',
+   400→   400→        text: 'Half a scoop is enough for me for evening sessions. Full scoop = not sleeping before 1 am. Works as advertised.',
+   401→   401→      },
+   402→   402→    ],
+   403→   403→  })
+   404→   404→
+   405→   405→  // ─────────────────────────── CREATINE ──────────────────────────
+   406→   406→
+   407→   407→  await product({
+   408→   408→    slug: 'esn-creatine-monohydrate',
+   409→   409→    name: 'Creatine Monohydrate Creapure®',
+   410→   410→    brand: 'ESN',
+   411→   411→    categoryId: creatine.id,
+   412→   412→    tagline: '100% Creapure® creatine monohydrate — the most researched supplement there is.',
+   413→   413→    description:
+   414→   414→      'ESN Creatine Monohydrate is made exclusively with Creapure® \u2014 the worldwide gold standard for creatine, produced in Germany. 5 g per day supports strength, power and muscle volume. Micronized for easy mixing, unflavored and versatile.',
+   415→   415→    usage:
+   416→   416→      'Take 5 g daily with plenty of fluid \u2014 timing doesn\u2019t matter, consistency does. Optional loading phase: 20 g/day for 5 days.',
+   417→   417→    image: '/images/products/creatine.png',
+   418→   418→    badges: ['Creapure®'],
+   419→   419→    rating: 4.9,
+   420→   420→    reviewCount: 1876,
+   421→   421→    isBestseller: true,
+   422→   422→    sortOrder: 0,
+   423→   423→    flavors: [{ name: 'Neutral', color: '#d8d5d0', rating: 4.9, reviewCount: 1876 }],
+   424→   424→    sizes: [{ label: '500 g', sublabel: '100 servings', price: 24.9, comparePrice: 27.9, servings: 100 }],
+   425→   425→    nutrition: [{ label: 'Creatine monohydrate', value: '100 g' }],
+   426→   426→    reviews: [
+   427→   427→      {
+   428→   428→        author: 'Marek S.',
+   429→   429→        rating: 5,
+   430→   430→        title: 'Creapure, no compromises',
+   431→   431→        text: 'Dissolves fine in my post-workout shake, no grit. Strength gains after 4 weeks are noticeable. Creapure is worth the small premium.',
+   432→   432→      },
+   433→   433→      {
+   434→   434→        author: 'Tom G.',
+   435→   435→        rating: 5,
+   436→   436→        title: 'Staple supplement',
+   437→   437→        text: 'Cheapest effective supplement per performance gain. 500 g lasts forever at 5 g/day.',
+   438→   438→      },
+   439→   439→      {
+   440→   440→        author: 'Ines R.',
+   441→   441→        rating: 5,
+   442→   442→        title: 'No bloating',
+   443→   443→        text: 'Was skeptical about water retention \u2014 totally fine with this one. Great quality.',
+   444→   444→      },
+   445→   445→    ],
+   446→   446→  })
+   447→   447→
+   448→   448→  // ────────────────────────── AMINO ACIDS ────────────────────────
+   449→   449→
+   450→   450→  await product({
+   451→   451→    slug: 'esn-eaa-essentials',
+   452→   452→    name: 'EAA Essentials',
+   453→   453→    brand: 'ESN',
+   454→   454→    categoryId: amino.id,
+   455→   455→    tagline: 'All 9 essential amino acids — intra-workout fuel for recovery and muscle protection.',
+   456→   456→    description:
+   457→   457→      'EAA Essentials delivers all nine essential amino acids your body can\u2019t produce itself \u2014 including 8 g leucine-rich BCAAs per serving. Ideal as an intra-workout drink or between meals on training days.',
+   458→   458→    usage: 'Mix one 10 g scoop with 500 ml water. Drink during training or throughout the day.',
+   459→   459→    image: '/images/products/eaa.png',
+   460→   460→    badges: ['Intra-workout'],
+   461→   461→    rating: 4.7,
+   462→   462→    reviewCount: 834,
+   463→   463→    isBestseller: true,
+   464→   464→    sortOrder: 0,
+   465→   465→    flavors: [
+   466→   466→      { name: 'Rainbow Candy', color: '#c05fd6', rating: 4.8, reviewCount: 366 },
+   467→   467→      { name: 'Watermelon', color: '#ef6a8b', rating: 4.7, reviewCount: 271 },
+   468→   468→      { name: 'Ice Tea Peach', color: '#f0a56b', rating: 4.6, reviewCount: 197 },
+   469→   469→    ],
+   470→   470→    sizes: [{ label: '500 g', sublabel: '50 servings', price: 29.9, servings: 50 }],
+   471→   471→    nutrition: [
+   472→   472→      { label: 'Energy (per 100 g)', value: '669 kJ / 158 kcal' },
+   473→   473→      { label: 'L-Leucine (per 10 g serving)', value: '2.5 g' },
+   474→   474→      { label: 'Total EAAs (per serving)', value: '9.4 g' },
+   475→   475→      { label: 'Protein', value: '78 g' },
+   476→   476→    ],
+   477→   477→    reviews: [
+   478→   478→      {
+   479→   479→        author: 'Lea M.',
+   480→   480→        rating: 5,
+   481→   481→        flavor: 'Rainbow Candy',
+   482→   482→        title: 'Tastes like childhood',
+   483→   483→        text: 'Rainbow Candy is unreal. I sip it through every session and recover noticeably faster.',
+   484→   484→      },
+   485→   485→      {
+   486→   486→        author: 'Ali K.',
+   487→   487→        rating: 4,
+   488→   488→        flavor: 'Ice Tea Peach',
+   489→   489→        title: 'Good during cutting',
+   490→   490→        text: 'Keeps me sane during fasted cardio. Ice Tea Peach is subtle and refreshing.',
+   491→   491→      },
+   492→   492→    ],
+   493→   493→  })
+   494→   494→
+   495→   495→  await product({
+   496→   496→    slug: 'esn-citrulline-malate',
+   497→   497→    name: 'L-Citrulline Malate',
+   498→   498→    brand: 'ESN',
+   499→   499→    categoryId: amino.id,
+   500→   500→    tagline: '8 g citrulline malate per serving for maximum pump and blood flow.',
+   501→   501→    description:
+   502→   502→      'L-Citrulline Malate 2:1 boosts nitric oxide production, blood flow and the skin-splitting pump during training. Stack it with Ultra Booster or take it solo on pump-focused days. Neutral taste, mixes clear.',
+   503→   503→    usage: 'Mix 10 g with 400 ml water, ~30 minutes before training.',
+   504→   504→    image: '/images/products/citrulline.png',
+   505→   505→    rating: 4.7,
+   506→   506→    reviewCount: 542,
+   507→   507→    sortOrder: 1,
+   508→   508→    flavors: [{ name: 'Neutral', color: '#d8d5d0', rating: 4.7, reviewCount: 542 }],
+   509→   509→    sizes: [{ label: '500 g', sublabel: '50 servings', price: 27.9, servings: 50 }],
+   510→   510→    nutrition: [{ label: 'L-Citrulline malate (per 10 g serving)', value: '8.0 g' }],
+   511→   511→    reviews: [
+   512→   512→      {
+   513→   513→        author: 'Sven A.',
+   514→   514→        rating: 5,
+   515→   515→        title: 'Veins on veins',
+   516→   516→        text: 'Noticeably better pump than arginine. Stacks perfectly with the Ultra Booster.',
+   517→   517→      },
+   518→   518→    ],
+   519→   519→  })
+   520→   520→
+   521→   521→  // ─────────────────────────── VITAMINS ──────────────────────────
+   522→   522→
+   523→   523→  await product({
+   524→   524→    slug: 'esn-zma',
+   525→   525→    name: 'ZMA',
+   526→   526→    brand: 'ESN',
+   527→   527→    categoryId: vitamins.id,
+   528→   528→    tagline: 'Zinc, magnesium & vitamin B6 — for recovery, sleep quality and testosterone levels.',
+   529→   529→    description:
+   530→   530→      'ZMA combines zinc, magnesium and vitamin B6 in the classic study-backed ratio. Supports normal muscle function, reduces tiredness and contributes to normal protein synthesis \u2014 ideal before bed on hard training blocks.',
+   531→   531→    usage: 'Take 3 capsules ~30 minutes before bed, on an empty stomach.',
+   532→   532→    image: '/images/products/zma.png',
+   533→   533→    badges: ['Before bed'],
+   534→   534→    rating: 4.6,
+   535→   535→    reviewCount: 298,
+   536→   536→    sortOrder: 0,
+   537→   537→    sizes: [{ label: '90 capsules', sublabel: '30 servings', price: 16.9, servings: 30 }],
+   538→   538→    nutrition: [
+   539→   539→      { label: 'Magnesium (per 3 capsules)', value: '450 mg' },
+   540→   540→      { label: 'Zinc', value: '10 mg' },
+   541→   541→      { label: 'Vitamin B6', value: '5.6 mg' },
+   542→   542→    ],
+   543→   543→    reviews: [
+   544→   544→      {
+   545→   545→        author: 'Robert E.',
+   546→   546→        rating: 5,
+   547→   547→        title: 'Better deep sleep',
+   548→   548→        text: 'Sleep noticeably deeper on training days. Part of my nightly routine for a year now.',
+   549→   549→      },
+   550→   550→    ],
+   551→   551→  })
+   552→   552→
+   553→   553→  // ────────────────────────── ACCESSORIES ────────────────────────
+   554→   554→
+   555→   555→  await product({
+   556→   556→    slug: 'fueld-shaker',
+   557→   557→    name: 'Fuel\u2019d Shaker 700 ml',
+   558→   558→    brand: 'FUELD',
+   559→   559→    categoryId: accessories.id,
+   560→   560→    tagline: 'Leak-proof shaker with steel mixing ball — dishwasher-safe, BPA-free.',
+   561→   561→    description:
+   562→   562→      'The Fuel\u2019d Shaker holds 700 ml, seals absolutely leak-proof and comes with a stainless steel mixing ball for lump-free shakes. Matte black, BPA-free, dishwasher-safe \u2014 the last shaker you\u2019ll need this year.',
+   563→   563→    image: '/images/products/shaker.png',
+   564→   564→    badges: ['BPA-free'],
+   565→   565→    rating: 4.8,
+   566→   566→    reviewCount: 512,
+   567→   567→    sortOrder: 0,
+   568→   568→    sizes: [{ label: '700 ml', price: 9.9 }],
+   569→   569→    reviews: [
+   570→   570→      {
+   571→   571→        author: 'Pia L.',
+   572→   572→        rating: 5,
+   573→   573→        title: 'Actually leak-proof',
+   574→   574→        text: 'Tossed it in my gym bag sideways. Zero leaks. The steel ball mixes Designer Whey perfectly.',
+   575→   575→      },
+   576→   576→    ],
+   577→   577→  })
+   578→   578→
+   579→   579→  await product({
+   580→   580→    slug: 'whey-sample-box',
+   581→   581→    name: 'Whey Sample Box',
+   582→   582→    brand: 'ESN',
+   583→   583→    categoryId: accessories.id,
+   584→   584→    tagline: '10 × 30 g sachets of our top Designer Whey flavors — find your flavor before committing.',
+   585→   585→    description:
+   586→   586→      'Can\u2019t decide on a flavor? The Whey Sample Box contains 10 single-serve sachets of the most popular Designer Whey flavors, including Chocolate Shake, Vanilla and Cookies & Cream. Perfect for finding your favorite \u2014 or for travel.',
+   587→   587→    image: '/images/products/sample-box.png',
+   588→   588→    badges: ['Perfect to start'],
+   589→   589→    rating: 4.9,
+   590→   590→    reviewCount: 1240,
+   591→   591→    isBestseller: true,
+   592→   592→    sortOrder: 1,
+   593→   593→    sizes: [{ label: '10 × 30 g', sublabel: '10 flavors', price: 9.9, comparePrice: 14.9, servings: 10 }],
+   594→   594→    reviews: [
+   595→   595→      {
+   596→   596→        author: 'Hannah D.',
+   597→   597→        rating: 5,
+   598→   598→        title: 'The smart way to start',
+   599→   599→        text: 'Tested 10 flavors for under 10 bucks, then ordered 2.5 kg of my favorite. This box should be everyone\u2019s first purchase.',
+   600→   600→      },
+   601→   601→      {
+   602→   602→        author: 'Yusuf B.',
+   603→   603→        rating: 5,
+   604→   604→        title: 'Great for travel too',
+   605→   605→        text: 'Sachets fit perfectly in my carry-on. Genius idea.',
+   606→   606→      },
+   607→   607→    ],
+   608→   608→  })
+   609→   609→
+   610→   610→  // ─────────────────────────── BUNDLES ───────────────────────────
+   611→   611→
+   612→   612→  await product({
+   613→   613→    slug: 'whey-starter-bundle',
+   614→   614→    name: 'Whey Starter Bundle',
+   615→   615→    brand: 'ESN',
+   616→   616→    categoryId: bundles.id,
+   617→   617→    tagline: 'Designer Whey 1 kg + Fuel\u2019d Shaker — everything you need to start, €4.90 cheaper.',
+   618→   618→    description:
+   619→   619→      'The complete starter kit: 1 kg of ESN Designer Whey in your chosen flavor plus the leak-proof Fuel\u2019d Shaker. Everything a beginner needs \u2014 bundled €4.90 cheaper than buying separately.',
+   620→   620→    usage: 'Mix one 30 g scoop with 300 ml water or milk in your new shaker.',
+   621→   621→    image: '/images/products/starter-bundle.png',
+   622→   622→    badges: ['Save €4.90', 'Bundle'],
+   623→   623→    rating: 4.8,
+   624→   624→    reviewCount: 356,
+   625→   625→    isFeatured: true,
+   626→   626→    isBestseller: true,
+   627→   627→    sortOrder: 0,
+   628→   628→    flavors: [
+   629→   629→      { name: 'Chocolate Shake', color: '#5a3a26', rating: 4.9, reviewCount: 141 },
+   630→   630→      { name: 'Vanilla Shake', color: '#f0e3c0', rating: 4.8, reviewCount: 122 },
+   631→   631→      { name: 'Strawberry Shake', color: '#e86a75', rating: 4.7, reviewCount: 93 },
+   632→   632→    ],
+   633→   633→    sizes: [{ label: '1 kg + Shaker', sublabel: '33 servings', price: 34.9, comparePrice: 39.8, servings: 33 }],
+   634→   634→    reviews: [
+   635→   635→      {
+   636→   636→        author: 'Niklas F.',
+   637→   637→        rating: 5,
+   638→   638→        flavor: 'Chocolate Shake',
+   639→   639→        title: 'Perfect gift for gym beginners',
+   640→   640→        text: 'Bought this for my little brother when he started lifting. He\u2019s now on his third bag. Bundle price is a no-brainer.',
+   641→   641→      },
+   642→   642→      {
+   643→   643→        author: 'Claudia V.',
+   644→   644→        rating: 5,
+   645→   645→        flavor: 'Vanilla Shake',
+   646→   646→        title: 'Everything you need',
+   647→   647→        text: 'Great whey, great shaker, great price. Shipping took two days.',
+   648→   648→      },
+   649→   649→    ],
+   650→   650→  })
+   651→   651→
+   652→   652→  const stats = await db.product.count()
+   653→   653→  const reviewStats = await db.review.count()
+   654→   654→  console.log(`✅ Seed complete: ${stats} products, ${reviewStats} written reviews, 7 categories`)
+   655→   655→}
+   656→   656→
+   657→   657→main()
+   658→   658→  .catch((e) => {
+   659→   659→    console.error(e)
+   660→   660→    process.exit(1)
+   661→   661→  })
+   662→   662→  .finally(() => db.$disconnect())
+   663→   663→
