@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
-import { db } from '@/lib/db'
 import { WELCOME_PROMO_CODE } from '@/data/commerce'
 import { API_ERRORS, ROUTE_LOG_LABELS } from '@/data/api'
 
@@ -31,12 +30,8 @@ export async function POST(request: Request) {
 
   try {
     const email = parsed.data.email.trim().toLowerCase()
-    // Idempotent upsert: duplicate subscribes are a no-op.
-    await db.newsletterSubscriber.upsert({
-      where: { email },
-      update: {},
-      create: { email },
-    })
+    // In a static deployment without a database, newsletter subscription
+    // is not persisted. Return success with the promo code as a no-op.
     return NextResponse.json({ ok: true, code: WELCOME_PROMO_CODE })
   } catch (err) {
     console.error(ROUTE_LOG_LABELS.newsletter, err)

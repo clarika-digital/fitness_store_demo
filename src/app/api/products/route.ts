@@ -10,6 +10,8 @@ import {
   ROUTE_LOG_LABELS,
 } from '@/data/api'
 import type { SortOption } from '@/lib/types'
+import { STATIC_PRODUCT_CARDS } from '@/data/products-data'
+import type { ProductCardData } from '@/lib/types'
 
 export const runtime = 'nodejs'
 
@@ -21,27 +23,30 @@ export async function GET(request: Request) {
     const sortParam = searchParams.get(PRODUCTS_QUERY_PARAMS.sort)
     const sort: SortOption = isSortOption(sortParam) ? sortParam : DEFAULT_SORT
 
-    const where: Prisma.ProductWhereInput = {}
-    if (category) where.category = { slug: category }
+    let products = [...STATIC_PRODUCT_CARDS]
+
+    // Filter by category
+    if (category) {
+      products = products.filter((p) => p.categorySlug === category)
+    }
+
+    // Filter by bestseller
     if (searchParams.get(PRODUCTS_QUERY_PARAMS.bestseller) === BOOLEAN_QUERY_TRUE) {
-      where.isBestseller = true
+      products = products.filter((p) => p.isBestseller)
     }
+
+    // Filter by featured
     if (searchParams.get(PRODUCTS_QUERY_PARAMS.featured) === BOOLEAN_QUERY_TRUE) {
-      where.isFeatured = true
+      products = products.filter((p) => p.isFeatured)
     }
 
-    const products = await db.product.findMany({
-      where,
-      include: { category: true, sizes: true, flavors: true },
-      orderBy: { sortOrder: 'asc' },
-    })
-
+    // Apply search query
     const needle = q?.trim().toLowerCase()
     const filtered = needle
-      ? products.filter((p) => matchesQuery(p, needle))
+      ? products.filter((p) => matchesQueryStatic(p, needle))
       : products
 
-    const cards = filtered.map(toCardData)
+    const cards = filtered.map(toCardDataStatic)
     sortCards(cards, sort)
 
     return NextResponse.json({ products: cards })
@@ -52,4 +57,17 @@ export async function GET(request: Request) {
       { status: 500 }
     )
   }
+}
+
+function matchesQueryStatic(product: ProductCardData, needle: string): boolean {
+  return (
+    product.name.toLowerCase().includes(needle) ||
+    product.tagline.toLowerCase().includes(needle) ||
+    product.brand.toLowerCase().includes(needle)
+  )
+}
+
+function toCardDataStatic(product: ProductCardData): ProductCardData {
+  // Return as-is since static data is already in the correct shape
+  return product
 }

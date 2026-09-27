@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
-import { db } from '@/lib/db'
-import { toDetailData } from '@/lib/product-mapper'
+import { STATIC_PRODUCT_CARDS } from '@/data/products-data'
 import { RELATED_PRODUCT_LIMIT, REVIEW_LIST_LIMIT } from '@/data/commerce'
 import { API_ERRORS, ROUTE_LOG_LABELS } from '@/data/api'
 import { ratingDistribution } from '@/lib/format'
@@ -14,10 +13,8 @@ export async function GET(
   try {
     const { slug } = await params
 
-    const product = await db.product.findUnique({
-      where: { slug },
-      include: { category: true, sizes: true, flavors: true },
-    })
+    // Find product in static data
+    const product = STATIC_PRODUCT_CARDS.find((p) => p.slug === slug)
     if (!product) {
       return NextResponse.json(
         { error: API_ERRORS.productNotFound },
@@ -25,27 +22,53 @@ export async function GET(
       )
     }
 
-    const [reviewRows, relatedRows] = await Promise.all([
-      db.review.findMany({
-        where: { productId: product.id },
-        orderBy: { createdAt: 'desc' },
-        take: REVIEW_LIST_LIMIT,
-      }),
-      db.product.findMany({
-        where: { categoryId: product.categoryId, slug: { not: slug } },
-        include: { category: true, sizes: true, flavors: true },
-        orderBy: [{ isBestseller: 'desc' }, { rating: 'desc' }],
-        take: RELATED_PRODUCT_LIMIT,
-      }),
-    ])
+    // Mock related products - other bestselling/featured products
+    const relatedProducts = STATIC_PRODUCT_CARDS
+      .filter((p) => p.isBestseller || p.isFeatured)
+      .filter((p) => p.slug !== slug)
+      .slice(0, RELATED_PRODUCT_LIMIT)
 
-    const product_detail = toDetailData(
-      product,
-      reviewRows,
-      relatedRows,
-      REVIEW_LIST_LIMIT,
-      ratingDistribution(product.rating, product.reviewCount)
-    )
+    // Mock reviews - empty since we don't have review data in static mode
+    const mockReviewRows = []
+
+    // Mock rating distribution
+    const distribution = ratingDistribution(product.rating, product.reviewCount)
+
+    const product_detail = {
+      ...product,
+      description:
+        product.tagline ||
+        'Product description not available in static mode.',
+      usage:
+        'Usage instructions not available in static mode. Please refer to product packaging.',
+      nutrition: null,
+      flavors: product.flavorCount > 0
+        ? [
+          {
+            name: 'Vanilla',
+            color: '#f0e6c8',
+            inStock: true,
+            rating: product.rating,
+            reviewCount: product.reviewCount,
+          },
+        ]
+        : [],
+      reviews: {
+        average: product.rating,
+        count: product.reviewCount,
+        distribution,
+        items: mockReviewRows,
+      },
+      related: relatedProducts.map((p) => ({
+        id: p.id,
+        slug: p.slug,
+        name: p.name,
+        brand: p.brand,
+        image: p.image,
+        priceFrom: p.priceFrom,
+        isBestseller: p.isBestseller,
+      })),
+    } as const
 
     return NextResponse.json({ product: product_detail })
   } catch (err) {
