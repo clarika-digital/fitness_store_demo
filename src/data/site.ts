@@ -20,9 +20,8 @@ export const SITE = {
   blurb:
     'Official ESN partner — lab-tested quality from Germany.',
   address: {
-    street: 'Musterstraße 12',
-    zip: '10999',
-    city: 'Berlin',
+    city: 'Accra',
+    country: 'Ghana',
   },
   supportEmail: 'clarikadigital@gmail.com',
   returnsEmail: 'clarikadigital@gmail.com',

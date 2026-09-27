@@ -78,7 +78,7 @@ export function Footer() {
             <address className="text-xs not-italic leading-relaxed">
               {SITE.legalName}
               <br />
-              {SITE.address.street}, {SITE.address.zip} {SITE.address.city}
+              {SITE.address.city}, {SITE.address.country}
               <br />
               <a
                 href={SITE.whatsapp.url}
