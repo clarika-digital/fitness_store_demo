@@ -2,6 +2,9 @@
 
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { QTY_HARD_MAX, QTY_MIN } from '@/data/commerce'
+import { STORAGE_KEYS } from '@/data/storage'
+import { roundMoney } from '@/lib/format'
 
 export type CartItem = {
   productId: string
@@ -26,8 +29,14 @@ type CartState = {
   clear: () => void
 }
 
+/** Separator between the parts of a cart line key. */
+export const CART_KEY_SEPARATOR = '::'
+
 const itemKey = (productId: string, flavor: string, sizeLabel: string) =>
-  `${productId}::${flavor}::${sizeLabel}`
+  [productId, flavor, sizeLabel].join(CART_KEY_SEPARATOR)
+
+/** A line whose quantity drops to zero is removed rather than kept at 0. */
+const MIN_LINE_QUANTITY = 1
 
 export const useCartStore = create<CartState>()(
   persist(
@@ -36,7 +45,7 @@ export const useCartStore = create<CartState>()(
       isOpen: false,
       open: () => set({ isOpen: true }),
       close: () => set({ isOpen: false }),
-      add: (item, quantity = 1) =>
+      add: (item, quantity = QTY_MIN) =>
         set((state) => {
           const key = itemKey(item.productId, item.flavor, item.sizeLabel)
           const existing = state.items.find(
@@ -46,7 +55,7 @@ export const useCartStore = create<CartState>()(
             return {
               items: state.items.map((i) =>
                 itemKey(i.productId, i.flavor, i.sizeLabel) === key
-                  ? { ...i, quantity: Math.min(99, i.quantity + quantity) }
+                  ? { ...i, quantity: Math.min(QTY_HARD_MAX, i.quantity + quantity) }
                   : i
               ),
             }
@@ -64,14 +73,14 @@ export const useCartStore = create<CartState>()(
           items: state.items
             .map((i) =>
               itemKey(i.productId, i.flavor, i.sizeLabel) === key
-                ? { ...i, quantity: Math.max(0, Math.min(99, qty)) }
+                ? { ...i, quantity: Math.max(0, Math.min(QTY_HARD_MAX, qty)) }
                 : i
             )
-            .filter((i) => i.quantity > 0),
+            .filter((i) => i.quantity >= MIN_LINE_QUANTITY),
         })),
       clear: () => set({ items: [] }),
     }),
-    { name: 'fueld-cart' }
+    { name: STORAGE_KEYS.cart }
   )
 )
 
@@ -80,7 +89,7 @@ export function cartKey(i: CartItem) {
 }
 
 export function cartSubtotal(items: CartItem[]): number {
-  return Math.round(items.reduce((s, i) => s + i.unitPrice * i.quantity, 0) * 100) / 100
+  return roundMoney(items.reduce((s, i) => s + i.unitPrice * i.quantity, 0))
 }
 
 export function cartCount(items: CartItem[]): number {

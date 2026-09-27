@@ -2,14 +2,31 @@
 
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { ChevronRight, SearchX } from 'lucide-react'
 import { fetchProducts } from '@/lib/api-client'
 import type { ProductCardData, SortOption } from '@/lib/types'
 import { useNavStore } from '@/store/nav-store'
 import {
-  ProductCard,
-  ProductCardSkeleton,
-} from '@/components/store/shared/product-card'
+  HERO_CATEGORY_SLUG,
+  PROTEIN_COMPARISON,
+  PROTEIN_TYPE_FILTERS,
+  SEARCH_CATEGORY_SLUG,
+  categoryMeta,
+  type ProteinTypeFilter,
+} from '@/data/categories'
+import { BREADCRUMB_COPY } from '@/data/copy/chrome'
+import {
+  CATEGORY_VIEW_COPY,
+  COMPARISON_TABLE_COPY,
+} from '@/data/copy/catalog'
+import { CATALOG_EMPTY_COPY, PRODUCT_LOADING_ERROR_COPY, STATE_COPY } from '@/data/copy/states'
+import { DEFAULT_SORT, SORT_OPTIONS } from '@/data/products'
+import {
+  BreadcrumbNav,
+  EmptyState,
+  Icon,
+  ProductGrid,
+  ProductGridSkeleton,
+} from '@/core'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -28,88 +45,24 @@ import {
 } from '@/components/ui/table'
 import { cn } from '@/lib/utils'
 
-// ─── Static category metadata ────────────────────────────────────────────────
-
-const CATEGORY_META: Record<string, { title: string; description: string }> = {
-  protein: {
-    title: 'Protein',
-    description:
-      'Whey protein, isolates & vegan blends — the foundation of every training goal.',
-  },
-  'pre-workout': {
-    title: 'Pre-Workout',
-    description:
-      'Booster and pump supplements for maximum focus, energy and performance.',
-  },
-  creatine: {
-    title: 'Creatine',
-    description:
-      'Creapure® creatine monohydrate — the most researched supplement in sports nutrition.',
-  },
-  amino: {
-    title: 'Amino Acids',
-    description:
-      'EAAs and citrulline for recovery, pump and muscle protection.',
-  },
-  vitamins: {
-    title: 'Vitamins & Health',
-    description: 'ZMA and micronutrients to cover your daily basics.',
-  },
-  accessories: {
-    title: 'Accessories',
-    description: 'Shakers and everything around the shaker cup.',
-  },
-  bundles: {
-    title: 'Bundles & Sets',
-    description: 'Curated stacks at a better price — the easy way to start.',
-  },
-}
-
-const SORT_OPTIONS: { value: SortOption; label: string }[] = [
-  { value: 'popular', label: 'Popular' },
-  { value: 'price-asc', label: 'Price ↑' },
-  { value: 'price-desc', label: 'Price ↓' },
-  { value: 'rating', label: 'Top rated' },
-]
-
-const TYPE_FILTERS = [
-  { value: 'all', label: 'All' },
-  { value: 'whey', label: 'Whey' },
-  { value: 'isolate', label: 'Isolate' },
-  { value: 'vegan', label: 'Vegan' },
-] as const
-
-type TypeFilter = (typeof TYPE_FILTERS)[number]['value']
-
-// ─── Protein comparison table (static, protein category only) ────────────────
-
-const COMPARISON_ROWS: { label: string; values: [string, string, string] }[] = [
-  { label: 'Protein per 100 g', values: ['76 g', '82 g', '68 g'] },
-  { label: 'Texture', values: ['Creamy shake', 'Crystal-clear drink', 'Smooth & creamy'] },
-  { label: 'Lactose-free', values: ['No', 'Yes', 'Yes'] },
-  { label: 'Best for', values: ['Taste & everyday', 'Cutting & summer', 'Plant-based diets'] },
-  { label: 'From', values: ['€29.90', '€34.90', '€32.90'] },
-]
-
-const COMPARISON_COLUMNS: { slug: string; name: string }[] = [
-  { slug: 'esn-designer-whey', name: 'Designer Whey' },
-  { slug: 'esn-isoclear', name: 'Isoclear' },
-  { slug: 'esn-vegan-protein', name: 'Vegan Protein' },
-]
+// ─── Protein comparison table (protein category only) ────────────────────────
 
 function ProteinComparisonTable() {
   const navigate = useNavStore((s) => s.navigate)
 
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white">
+    <div
+      className="rounded-xl border border-zinc-200 bg-white"
+      aria-label={COMPARISON_TABLE_COPY.ariaLabel}
+    >
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
               <TableHead className="min-w-32 text-xs font-semibold uppercase tracking-wider text-zinc-500">
-                Compare
+                {COMPARISON_TABLE_COPY.headerLabel}
               </TableHead>
-              {COMPARISON_COLUMNS.map((col) => (
+              {PROTEIN_COMPARISON.columns.map((col) => (
                 <TableHead key={col.slug} className="min-w-36">
                   <button
                     type="button"
@@ -123,7 +76,7 @@ function ProteinComparisonTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {COMPARISON_ROWS.map((row) => (
+            {PROTEIN_COMPARISON.rows.map((row) => (
               <TableRow key={row.label}>
                 <TableCell className="text-xs font-semibold text-zinc-500">
                   {row.label}
@@ -133,7 +86,7 @@ function ProteinComparisonTable() {
                     key={i}
                     className={cn(
                       'text-sm text-zinc-800',
-                      row.label === 'From' && 'font-extrabold text-zinc-900'
+                      row.emphasis && 'font-extrabold text-zinc-900'
                     )}
                   >
                     {v}
@@ -143,14 +96,14 @@ function ProteinComparisonTable() {
             ))}
             <TableRow className="hover:bg-transparent">
               <TableCell className="pb-4" />
-              {COMPARISON_COLUMNS.map((col) => (
+              {PROTEIN_COMPARISON.columns.map((col) => (
                 <TableCell key={col.slug} className="pb-4">
                   <Button
                     size="sm"
                     className="h-9 w-full min-w-20"
                     onClick={() => navigate({ name: 'product', slug: col.slug })}
                   >
-                    View
+                    {COMPARISON_TABLE_COPY.cta}
                   </Button>
                 </TableCell>
               ))}
@@ -159,13 +112,15 @@ function ProteinComparisonTable() {
         </Table>
       </div>
       <div className="border-t border-zinc-100 px-4 py-3 text-xs text-zinc-500 sm:px-6">
-        Not sure? Get the{' '}
+        {COMPARISON_TABLE_COPY.footerPrefix}{' '}
         <button
           type="button"
-          onClick={() => navigate({ name: 'product', slug: 'whey-sample-box' })}
+          onClick={() =>
+            navigate({ name: 'product', slug: PROTEIN_COMPARISON.sampleBoxSlug })
+          }
           className="font-semibold text-primary underline-offset-2 hover:underline"
         >
-          Whey Sample Box →
+          {COMPARISON_TABLE_COPY.footerLink}
         </button>
       </div>
     </div>
@@ -176,14 +131,14 @@ function ProteinComparisonTable() {
 
 export function CategoryView({ slug, q }: { slug: string; q?: string }) {
   const navigate = useNavStore((s) => s.navigate)
-  const [sort, setSort] = useState<SortOption>('popular')
-  const [type, setType] = useState<TypeFilter>('all')
+  const [sort, setSort] = useState<SortOption>(DEFAULT_SORT)
+  const [type, setType] = useState<ProteinTypeFilter>('all')
 
-  const isSearch = slug === 'search'
-  const isProtein = slug === 'protein'
-  const meta = !isSearch ? CATEGORY_META[slug] : undefined
+  const isSearch = slug === SEARCH_CATEGORY_SLUG
+  const isProtein = slug === HERO_CATEGORY_SLUG
+  const meta = isSearch ? undefined : categoryMeta(slug)
 
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['category', slug, q ?? '', sort],
     queryFn: () =>
       isSearch
@@ -194,35 +149,24 @@ export function CategoryView({ slug, q }: { slug: string; q?: string }) {
   const products: ProductCardData[] = useMemo(() => {
     const list = data?.products ?? []
     if (!isProtein || type === 'all') return list
-    return list.filter((p) =>
-      `${p.name} ${p.tagline}`.toLowerCase().includes(type)
-    )
+    return list.filter((p) => `${p.name} ${p.tagline}`.toLowerCase().includes(type))
   }, [data, isProtein, type])
 
-  const title = isSearch ? `Search results for “${q}”` : (meta?.title ?? slug)
+  const title = isSearch
+    ? CATEGORY_VIEW_COPY.searchTitle(q)
+    : (meta?.title ?? slug)
 
   return (
-    <section aria-label={title} className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      {/* Breadcrumb + heading */}
-      <nav aria-label="Breadcrumb" className="mb-3">
-        <ol className="flex items-center gap-1 text-xs text-zinc-500">
-          <li>
-            <button
-              type="button"
-              onClick={() => navigate({ name: 'home' })}
-              className="rounded px-1 py-0.5 font-medium underline-offset-4 hover:text-primary hover:underline"
-            >
-              Home
-            </button>
-          </li>
-          <li aria-hidden="true">
-            <ChevronRight size={12} />
-          </li>
-          <li aria-current="page" className="font-semibold text-zinc-800">
-            {isSearch ? 'Search' : title}
-          </li>
-        </ol>
-      </nav>
+    <section
+      aria-label={title}
+      className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8"
+    >
+      <BreadcrumbNav
+        items={[
+          { label: BREADCRUMB_COPY.home, view: { name: 'home' } },
+          { label: isSearch ? CATEGORY_VIEW_COPY.breadcrumbSearch : title },
+        ]}
+      />
 
       <h1 className="text-3xl font-extrabold tracking-tight text-zinc-900 sm:text-4xl">
         {title}
@@ -234,7 +178,7 @@ export function CategoryView({ slug, q }: { slug: string; q?: string }) {
       )}
       {isProtein && (
         <p className="mt-2 text-sm font-medium text-zinc-500">
-          11 flavors across the range — every flavor rated by real customers.
+          {CATEGORY_VIEW_COPY.proteinFlavorHint}
         </p>
       )}
 
@@ -249,7 +193,7 @@ export function CategoryView({ slug, q }: { slug: string; q?: string }) {
       <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-h-9 flex-wrap items-center gap-2">
           {isProtein ? (
-            TYPE_FILTERS.map((f) => (
+            PROTEIN_TYPE_FILTERS.map((f) => (
               <button
                 key={f.value}
                 type="button"
@@ -267,18 +211,20 @@ export function CategoryView({ slug, q }: { slug: string; q?: string }) {
             ))
           ) : (
             <span className="text-sm font-medium text-zinc-500">
-              {isLoading ? 'Loading…' : `${products.length} products`}
+              {isLoading
+                ? CATEGORY_VIEW_COPY.loading
+                : CATEGORY_VIEW_COPY.resultCount(products.length)}
             </span>
           )}
         </div>
 
         <div className="flex items-center gap-2">
           <label htmlFor="category-sort" className="sr-only">
-            Sort products
+            {CATEGORY_VIEW_COPY.sortAriaLabel}
           </label>
           <Select value={sort} onValueChange={(v) => setSort(v as SortOption)}>
             <SelectTrigger id="category-sort" className="h-9 w-40 text-sm">
-              <SelectValue placeholder="Sort" />
+              <SelectValue placeholder={CATEGORY_VIEW_COPY.sortPlaceholder} />
             </SelectTrigger>
             <SelectContent>
               {SORT_OPTIONS.map((o) => (
@@ -294,68 +240,62 @@ export function CategoryView({ slug, q }: { slug: string; q?: string }) {
       {/* Result count for protein (chips replace the count on the left) */}
       {isProtein && (
         <p className="mt-2 text-xs text-zinc-400" aria-live="polite">
-          {isLoading ? '…' : `${products.length} products`}
+          {isLoading
+            ? STATE_COPY.ellipsis
+            : CATEGORY_VIEW_COPY.resultCount(products.length)}
         </p>
       )}
 
-      {/* Grid / loading / empty */}
+      {/* Grid / loading / error / empty */}
       {isLoading ? (
-        <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <ProductCardSkeleton key={i} />
-          ))}
+        <div className="mt-6">
+          <ProductGridSkeleton />
         </div>
       ) : isError ? (
         <div className="mt-6 flex flex-col items-center gap-3 rounded-xl border border-dashed border-zinc-300 py-16 text-center">
+          <Icon name="alert-triangle" size={22} className="text-primary" />
           <p className="text-sm font-semibold text-zinc-900">
-            Something went wrong loading products.
+            {PRODUCT_LOADING_ERROR_COPY.title}
           </p>
-          <p className="text-sm text-zinc-500">Please try again in a moment.</p>
+          <p className="text-sm text-zinc-500">{PRODUCT_LOADING_ERROR_COPY.body}</p>
+          <Button variant="outline" onClick={() => refetch()}>
+            {STATE_COPY.retry}
+          </Button>
         </div>
       ) : products.length === 0 ? (
-        <EmptyState q={q} isSearch={isSearch} />
+        <EmptyState
+          className="mt-6"
+          icon={CATALOG_EMPTY_COPY.icon}
+          title={
+            isSearch
+              ? CATALOG_EMPTY_COPY.searchTitle(q)
+              : CATALOG_EMPTY_COPY.categoryTitle
+          }
+          body={
+            isSearch ? CATALOG_EMPTY_COPY.searchBody : CATALOG_EMPTY_COPY.categoryBody
+          }
+          actions={[
+            {
+              label: CATALOG_EMPTY_COPY.backToHome,
+              onSelect: () => navigate({ name: 'home' }),
+            },
+            ...(isSearch
+              ? [
+                  {
+                    label: CATALOG_EMPTY_COPY.backToShop,
+                    onSelect: () =>
+                      navigate({ name: 'category', slug: HERO_CATEGORY_SLUG }),
+                    variant: 'outline' as const,
+                  },
+                ]
+              : []),
+          ]}
+        />
       ) : (
-        <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
-          {products.map((p) => (
-            <ProductCard key={p.id} product={p} />
-          ))}
+        <div className="mt-6">
+          <ProductGrid products={products} />
         </div>
       )}
     </section>
-  )
-}
-
-// ─── Empty state ─────────────────────────────────────────────────────────────
-
-function EmptyState({ q, isSearch }: { q?: string; isSearch: boolean }) {
-  const navigate = useNavStore((s) => s.navigate)
-
-  return (
-    <div className="mt-6 flex flex-col items-center gap-4 rounded-xl border border-dashed border-zinc-300 bg-white py-16 text-center">
-      <span className="flex h-14 w-14 items-center justify-center rounded-full bg-zinc-100">
-        <SearchX className="text-zinc-400" size={26} aria-hidden="true" />
-      </span>
-      <div>
-        <p className="text-lg font-extrabold text-zinc-900">
-          {isSearch ? `Nothing found for “${q}”` : 'No products here yet'}
-        </p>
-        <p className="mt-1 text-sm text-zinc-500">
-          {isSearch
-            ? 'Try “whey”, “creatine”, “vanilla”'
-            : 'Check back soon — new products are on the way.'}
-        </p>
-      </div>
-      <div className="flex flex-wrap items-center justify-center gap-2">
-        <Button onClick={() => navigate({ name: 'home' })}>Back to home</Button>
-        {isSearch && (
-          <Button
-            variant="outline"
-            onClick={() => navigate({ name: 'category', slug: 'protein' })}
-          >
-            Back to shop
-          </Button>
-        )}
-      </div>
-    </div>
   )
 }

@@ -1,15 +1,40 @@
 import type { ProductSize } from './types'
+import {
+  CURRENCY,
+  DATE_LOCALE,
+  GRAMS_PER_KG,
+  MONEY_LOCALE,
+  MONEY_SCALE,
+  PERCENT_SCALE,
+} from '@/data/commerce'
 
-export const FREE_SHIPPING_THRESHOLD = 59
-export const STANDARD_SHIPPING = 4.9
-export const EXPRESS_SHIPPING = 9.9
-export const PROMO_CODES: Record<string, number> = { WELCOME10: 0.1 }
+/**
+ * Formatting helpers.
+ *
+ * Money/shipping *rules* live in `@/data/commerce` — this module only formats
+ * values. Re-exported here so existing `from '@/lib/format'` imports keep
+ * working, but new code should import rules from `@/data`.
+ */
+export {
+  FREE_SHIPPING_THRESHOLD,
+  STANDARD_SHIPPING,
+  EXPRESS_SHIPPING,
+  PROMO_CODES,
+  WELCOME_PROMO_CODE,
+  type ShippingMethodId,
+  type PaymentMethodId,
+} from '@/data/commerce'
 
 export function formatEUR(value: number): string {
-  return new Intl.NumberFormat('en-IE', {
+  return new Intl.NumberFormat(MONEY_LOCALE, {
     style: 'currency',
-    currency: 'EUR',
+    currency: CURRENCY,
   }).format(value)
+}
+
+/** Rounds to the currency's minor unit, avoiding float drift on money maths. */
+export function roundMoney(value: number): number {
+  return Math.round(value * MONEY_SCALE) / MONEY_SCALE
 }
 
 /** Extract a per-kg price from a size label like "1 kg" / "2.5 kg" / "500 g" / "10 × 30 g". */
@@ -19,20 +44,20 @@ export function perKg(size: ProductSize): number | null {
   if (multi) {
     const total = parseFloat(multi[1]) * parseFloat(multi[2])
     if (!total || Number.isNaN(total)) return null
-    const kg = multi[3].toLowerCase() === 'kg' ? total : total / 1000
-    return Math.round((size.price / kg) * 100) / 100
+    const kg = multi[3].toLowerCase() === 'kg' ? total : total / GRAMS_PER_KG
+    return roundMoney(size.price / kg)
   }
   const m = size.label.match(/([\d.]+)\s*(kg|g)\b/i)
   if (!m) return null
   const qty = parseFloat(m[1])
   if (!qty || Number.isNaN(qty)) return null
-  const kg = m[2].toLowerCase() === 'kg' ? qty : qty / 1000
-  return Math.round((size.price / kg) * 100) / 100
+  const kg = m[2].toLowerCase() === 'kg' ? qty : qty / GRAMS_PER_KG
+  return roundMoney(size.price / kg)
 }
 
 export function perServing(size: ProductSize): number | null {
   if (!size.servings) return null
-  return Math.round((size.price / size.servings) * 100) / 100
+  return roundMoney(size.price / size.servings)
 }
 
 /** Deterministic plausible rating distribution for a given average & count. */
@@ -50,12 +75,19 @@ export function ratingDistribution(average: number, count: number) {
     { stars: 1, pct: one },
   ]
   const total = raw.reduce((s, r) => s + r.pct, 0)
-  return raw.map((r) => ({ stars: r.stars, pct: Math.round((r.pct / total) * 100) }))
+  return raw.map((r) => ({
+    stars: r.stars,
+    pct: Math.round((r.pct / total) * PERCENT_SCALE),
+  }))
 }
 
 export function estimatedDeliveryText(method: 'standard' | 'express'): string {
   const fmt = (d: Date) =>
-    d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
+    d.toLocaleDateString(DATE_LOCALE, {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+    })
   const now = new Date()
   const min = new Date(now)
   const max = new Date(now)

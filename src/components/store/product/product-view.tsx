@@ -1,16 +1,21 @@
 'use client'
 
 import { useEffect } from 'react'
-import Image from 'next/image'
 import { useQuery } from '@tanstack/react-query'
-import { AlertCircle, ChevronRight } from 'lucide-react'
 import { fetchProduct } from '@/lib/api-client'
+import { BREADCRUMB_COPY } from '@/data/copy/chrome'
+import { PDP_ACCORDIONS_COPY, PRODUCT_VIEW_COPY } from '@/data/copy/product'
+import { PRODUCT_NOT_FOUND_COPY } from '@/data/copy/states'
+import { GALLERY_THUMB_COUNT } from '@/data/products'
+import { IMAGE_SIZES } from '@/data/images'
+import {
+  BreadcrumbNav,
+  EmptyState,
+  ProductGrid,
+  ProductThumbnail,
+  SectionHeading,
+} from '@/core'
 import { useNavStore } from '@/store/nav-store'
-import { ProductCard } from '@/components/store/shared/product-card'
-import { SectionHeading } from '@/components/store/shared/section-heading'
-import { PurchasePanel } from './purchase-panel'
-import { ReviewSection } from './review-section'
-import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Accordion,
@@ -24,6 +29,11 @@ import {
   TableCell,
   TableRow,
 } from '@/components/ui/table'
+import { cn } from '@/lib/utils'
+import { PurchasePanel } from './purchase-panel'
+import { ReviewSection } from './review-section'
+
+// ─── Main view ───────────────────────────────────────────────────────────────
 
 export function ProductView({ slug }: { slug: string }) {
   const navigate = useNavStore((s) => s.navigate)
@@ -40,7 +50,10 @@ export function ProductView({ slug }: { slug: string }) {
 
   if (isLoading) {
     return (
-      <section aria-label="Product" className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <section
+        aria-label={PRODUCT_VIEW_COPY.loadingAriaLabel}
+        className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8"
+      >
         <Skeleton className="h-4 w-48" />
         <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-10">
           <Skeleton className="aspect-square w-full rounded-2xl" />
@@ -60,94 +73,68 @@ export function ProductView({ slug }: { slug: string }) {
 
   if (isError || !product) {
     return (
-      <section aria-label="Product" className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="flex flex-col items-center gap-4 rounded-xl border border-dashed border-zinc-300 bg-white py-20 text-center">
-          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-zinc-100">
-            <AlertCircle className="text-zinc-400" size={26} aria-hidden="true" />
-          </span>
-          <div>
-            <p className="text-lg font-extrabold text-zinc-900">
-              Product not found
-            </p>
-            <p className="mt-1 text-sm text-zinc-500">
-              This product may have been moved or is no longer available.
-            </p>
-          </div>
-          <Button onClick={() => navigate({ name: 'home' })}>Back to home</Button>
-        </div>
+      <section
+        aria-label={PRODUCT_VIEW_COPY.ariaLabel}
+        className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8"
+      >
+        <EmptyState
+          icon={PRODUCT_NOT_FOUND_COPY.icon}
+          title={PRODUCT_NOT_FOUND_COPY.title}
+          body={PRODUCT_NOT_FOUND_COPY.body}
+          actions={[
+            {
+              label: PRODUCT_NOT_FOUND_COPY.backToHome,
+              onSelect: () => navigate({ name: 'home' }),
+            },
+          ]}
+        />
       </section>
     )
   }
 
-  const thumbIndexes = [0, 1, 2]
-
   return (
-    <section aria-label={`${product.brand} ${product.name}`} className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      {/* Breadcrumb */}
-      <nav aria-label="Breadcrumb" className="mb-6">
-        <ol className="flex flex-wrap items-center gap-1 text-xs text-zinc-500">
-          <li>
-            <button
-              type="button"
-              onClick={() => navigate({ name: 'home' })}
-              className="rounded px-1 py-0.5 font-medium underline-offset-4 hover:text-primary hover:underline"
-            >
-              Home
-            </button>
-          </li>
-          <li aria-hidden="true">
-            <ChevronRight size={12} />
-          </li>
-          <li>
-            <button
-              type="button"
-              onClick={() =>
-                navigate({ name: 'category', slug: product.categorySlug })
-              }
-              className="rounded px-1 py-0.5 font-medium underline-offset-4 hover:text-primary hover:underline"
-            >
-              {product.categoryName}
-            </button>
-          </li>
-          <li aria-hidden="true">
-            <ChevronRight size={12} />
-          </li>
-          <li aria-current="page" className="font-semibold text-zinc-800">
-            {product.name}
-          </li>
-        </ol>
-      </nav>
+    <section
+      aria-label={`${product.brand} ${product.name}`}
+      className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8"
+    >
+      <BreadcrumbNav
+        items={[
+          { label: BREADCRUMB_COPY.home, view: { name: 'home' } },
+          {
+            label: product.categoryName,
+            view: { name: 'category', slug: product.categorySlug },
+          },
+          { label: product.name },
+        ]}
+      />
 
       {/* Gallery + purchase panel */}
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-10">
         <div>
-          <div className="relative aspect-square overflow-hidden rounded-2xl border border-zinc-200 bg-white">
-            <Image
-              src={product.image}
-              alt={`${product.brand} ${product.name}`}
-              fill
-              priority
-              sizes="(max-width: 1024px) 100vw, 50vw"
-              className="object-cover"
-            />
-          </div>
-          <div className="mt-3 flex gap-2" role="group" aria-label="Product images">
-            {thumbIndexes.map((i) => (
-              <div
+          <ProductThumbnail
+            src={product.image}
+            alt={`${product.brand} ${product.name}`}
+            className="aspect-square w-full border border-zinc-200 bg-white"
+            priority
+            sizes={IMAGE_SIZES.productMain}
+          />
+          <div
+            className="mt-3 flex gap-2"
+            role="group"
+            aria-label={PRODUCT_VIEW_COPY.galleryAriaLabel}
+          >
+            {Array.from({ length: GALLERY_THUMB_COUNT }, (_, i) => (
+              <ProductThumbnail
                 key={i}
-                aria-hidden="true"
-                className={`relative h-20 w-20 overflow-hidden rounded-lg border bg-white ${
+                src={product.image}
+                alt=""
+                size={80}
+                className={cn(
+                  'border',
                   i === 0 ? 'border-primary ring-1 ring-primary' : 'border-zinc-200'
-                }`}
-              >
-                <Image
-                  src={product.image}
-                  alt=""
-                  fill
-                  sizes="80px"
-                  className="object-cover"
-                />
-              </div>
+                )}
+                sizes={IMAGE_SIZES.productThumb}
+              />
             ))}
           </div>
         </div>
@@ -157,14 +144,10 @@ export function ProductView({ slug }: { slug: string }) {
 
       {/* Details accordions */}
       <div className="mt-10 rounded-xl border border-zinc-200 bg-white px-4 sm:px-6">
-        <Accordion
-          type="multiple"
-          defaultValue={['description']}
-          className="w-full"
-        >
-          <AccordionItem value="description">
+        <Accordion type="multiple" defaultValue={[PDP_ACCORDIONS_COPY.openByDefault]}>
+          <AccordionItem value={PDP_ACCORDIONS_COPY.openByDefault}>
             <AccordionTrigger className="text-sm font-extrabold text-zinc-900">
-              Description
+              {PDP_ACCORDIONS_COPY.description}
             </AccordionTrigger>
             <AccordionContent className="text-sm leading-relaxed text-zinc-600">
               {product.description}
@@ -174,7 +157,7 @@ export function ProductView({ slug }: { slug: string }) {
           {product.nutrition && product.nutrition.rows.length > 0 && (
             <AccordionItem value="nutrition">
               <AccordionTrigger className="text-sm font-extrabold text-zinc-900">
-                Nutrition (per 100 g)
+                {PDP_ACCORDIONS_COPY.nutrition}
               </AccordionTrigger>
               <AccordionContent>
                 <Table>
@@ -198,7 +181,7 @@ export function ProductView({ slug }: { slug: string }) {
           {product.usage && (
             <AccordionItem value="usage">
               <AccordionTrigger className="text-sm font-extrabold text-zinc-900">
-                How to use
+                {PDP_ACCORDIONS_COPY.usage}
               </AccordionTrigger>
               <AccordionContent className="text-sm leading-relaxed text-zinc-600">
                 {product.usage}
@@ -208,11 +191,10 @@ export function ProductView({ slug }: { slug: string }) {
 
           <AccordionItem value="shipping">
             <AccordionTrigger className="text-sm font-extrabold text-zinc-900">
-              Shipping &amp; returns
+              {PDP_ACCORDIONS_COPY.shipping}
             </AccordionTrigger>
             <AccordionContent className="text-sm leading-relaxed text-zinc-600">
-              Free shipping over €59 · Standard €4.90 (2–4 days) · Express €9.90
-              (next day) · 30-day returns
+              {PDP_ACCORDIONS_COPY.shippingBody}
             </AccordionContent>
           </AccordionItem>
         </Accordion>
@@ -223,16 +205,12 @@ export function ProductView({ slug }: { slug: string }) {
 
       {/* Cross-sell */}
       {product.related.length > 0 && (
-        <section aria-label="Complete your stack" className="mt-16">
+        <section aria-label={PRODUCT_VIEW_COPY.stackAriaLabel} className="mt-16">
           <SectionHeading
-            eyebrow="Frequently stacked"
-            title="Complete your stack"
+            eyebrow={PRODUCT_VIEW_COPY.stackEyebrow}
+            title={PRODUCT_VIEW_COPY.stackTitle}
           />
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            {product.related.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
-          </div>
+          <ProductGrid products={product.related} />
         </section>
       )}
     </section>

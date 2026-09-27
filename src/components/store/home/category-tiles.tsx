@@ -2,40 +2,15 @@
 
 import Image from 'next/image'
 import { useNavStore } from '@/store/nav-store'
-import { SectionHeading } from '@/components/store/shared/section-heading'
+import { CATEGORY_TILES, type CategoryTile } from '@/data/categories'
+import { CATEGORY_TILES_COPY } from '@/data/copy/home'
+import { IMAGE_SIZES } from '@/data/images'
+import { SectionHeading } from '@/core'
 import { cn } from '@/lib/utils'
 
-type Tile = {
-  slug: string
-  label: string
-  sub?: string
-  image: string
-  /** spans 2 cols x 2 rows in the mosaic */
-  big?: boolean
-  /** spans 2 cols (bottom row on desktop) */
-  wide?: boolean
-}
-
-const tiles: Tile[] = [
-  {
-    slug: 'protein',
-    label: 'Protein',
-    sub: 'Whey · Isolate · Vegan',
-    image: '/images/products/designer-whey.png',
-    big: true,
-  },
-  { slug: 'pre-workout', label: 'Pre-Workout', image: '/images/products/ultra-booster.png' },
-  { slug: 'creatine', label: 'Creatine', image: '/images/products/creatine.png' },
-  { slug: 'amino', label: 'Amino Acids', image: '/images/products/eaa.png' },
-  { slug: 'vitamins', label: 'Vitamins', image: '/images/products/zma.png' },
-  { slug: 'accessories', label: 'Accessories', image: '/images/products/shaker.png', wide: true },
-  { slug: 'bundles', label: 'Bundles', image: '/images/products/starter-bundle.png', wide: true },
-]
-
-function tileSizes(tile: Tile) {
-  if (tile.big) return '(max-width: 1024px) 100vw, 50vw'
-  if (tile.wide) return '(max-width: 1024px) 100vw, 50vw'
-  return '(max-width: 640px) 50vw, 25vw'
+function tileSizes(tile: CategoryTile) {
+  if (tile.big || tile.wide) return IMAGE_SIZES.productTileWide
+  return IMAGE_SIZES.productTile
 }
 
 export function CategoryTiles() {
@@ -44,9 +19,12 @@ export function CategoryTiles() {
   return (
     <section className="bg-white py-12 lg:py-16">
       <div className="mx-auto max-w-7xl px-4">
-        <SectionHeading eyebrow="Shop by category" title="Built around protein" />
+        <SectionHeading
+          eyebrow={CATEGORY_TILES_COPY.eyebrow}
+          title={CATEGORY_TILES_COPY.title}
+        />
         <div className="grid auto-rows-[10rem] grid-cols-2 gap-3 sm:auto-rows-[11rem] lg:auto-rows-[12rem] lg:grid-cols-4">
-          {tiles.map((tile) => (
+          {CATEGORY_TILES.map((tile) => (
             <button
               key={tile.slug}
               type="button"

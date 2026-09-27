@@ -2,6 +2,7 @@
 
 import { cn } from '@/lib/utils'
 
+/** Eyebrow + title + subtitle heading with an optional trailing action. */
 export function SectionHeading({
   eyebrow,
   title,
@@ -39,7 +40,12 @@ export function SectionHeading({
           {title}
         </h2>
         {subtitle && (
-          <p className={cn('mt-1.5 max-w-2xl text-sm', dark ? 'text-zinc-400' : 'text-zinc-500')}>
+          <p
+            className={cn(
+              'mt-1.5 max-w-2xl text-sm',
+              dark ? 'text-zinc-400' : 'text-zinc-500'
+            )}
+          >
             {subtitle}
           </p>
         )}

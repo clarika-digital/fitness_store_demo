@@ -2,12 +2,17 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '@/lib/db'
 import {
-  estimatedDeliveryText,
+  CHECKOUT_ITEM_QTY_MAX,
   EXPRESS_SHIPPING,
   FREE_SHIPPING_THRESHOLD,
+  ORDER_NUMBER_ALPHABET,
+  ORDER_NUMBER_PREFIX,
+  ORDER_NUMBER_RANDOM_LENGTH,
   PROMO_CODES,
   STANDARD_SHIPPING,
-} from '@/lib/format'
+} from '@/data/commerce'
+import { API_ERRORS, ORDER_STATUS, ROUTE_LOG_LABELS } from '@/data/api'
+import { estimatedDeliveryText, roundMoney } from '@/lib/format'
 import type { CheckoutResponse } from '@/lib/types'
 
 export const runtime = 'nodejs'
@@ -29,22 +34,21 @@ const checkoutSchema = z.object({
         productId: z.string().min(1),
         flavor: z.string().min(1),
         sizeLabel: z.string().min(1),
-        quantity: z.number().int().min(1).max(99),
+        quantity: z.number().int().min(1).max(CHECKOUT_ITEM_QTY_MAX),
       })
     )
     .min(1),
 })
 
-const round2 = (value: number): number => Math.round(value * 100) / 100
-
-const ORDER_SUFFIX_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-
 function generateOrderNumber(): string {
   const suffix = Array.from(
-    { length: 3 },
-    () => ORDER_SUFFIX_CHARS[Math.floor(Math.random() * ORDER_SUFFIX_CHARS.length)]
+    { length: ORDER_NUMBER_RANDOM_LENGTH },
+    () =>
+      ORDER_NUMBER_ALPHABET[
+        Math.floor(Math.random() * ORDER_NUMBER_ALPHABET.length)
+      ]
   ).join('')
-  return `FD-${Date.now().toString(36).toUpperCase()}-${suffix}`
+  return `${ORDER_NUMBER_PREFIX}-${Date.now().toString(36).toUpperCase()}-${suffix}`
 }
 
 type ResolvedItem = {
@@ -63,15 +67,21 @@ export async function POST(request: Request) {
   try {
     body = await request.json()
   } catch {
-    return NextResponse.json({ ok: false, error: 'Invalid request body' }, { status: 400 })
+    return NextResponse.json(
+      { ok: false, error: API_ERRORS.invalidBody },
+      { status: 400 }
+    )
   }
 
   const parsed = checkoutSchema.safeParse(body)
   if (!parsed.success) {
     const issue = parsed.error.issues[0]
     const error = issue
-      ? `Invalid checkout data: ${issue.path.join('.') || 'body'} — ${issue.message}`
-      : 'Invalid checkout data'
+      ? API_ERRORS.invalidCheckoutDataDetail(
+          issue.path.join(API_ERRORS.pathSeparator) || API_ERRORS.bodyFallback,
+          issue.message
+        )
+      : API_ERRORS.invalidCheckoutData
     return NextResponse.json({ ok: false, error }, { status: 400 })
   }
 
@@ -92,7 +102,7 @@ export async function POST(request: Request) {
       const size = product?.sizes.find((s) => s.label === item.sizeLabel)
       if (!product || !size) {
         return NextResponse.json(
-          { ok: false, error: 'Invalid product in cart' },
+          { ok: false, error: API_ERRORS.invalidCartItem },
           { status: 400 }
         )
       }
@@ -108,19 +118,19 @@ export async function POST(request: Request) {
       })
     }
 
-    const subtotal = round2(
+    const subtotal = roundMoney(
       resolvedItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0)
     )
     const promoRate =
       PROMO_CODES[(data.promoCode ?? '').trim().toUpperCase()] ?? 0
-    const discount = round2(subtotal * promoRate)
+    const discount = roundMoney(subtotal * promoRate)
     const shippingCost =
       data.shippingMethod === 'express'
         ? EXPRESS_SHIPPING
         : subtotal - discount >= FREE_SHIPPING_THRESHOLD
           ? 0
           : STANDARD_SHIPPING
-    const total = round2(subtotal - discount + shippingCost)
+    const total = roundMoney(subtotal - discount + shippingCost)
 
     const orderNumber = generateOrderNumber()
 
@@ -142,7 +152,7 @@ export async function POST(request: Request) {
           discount,
           subtotal,
           total,
-          status: 'confirmed',
+          status: ORDER_STATUS.confirmed,
         },
       })
       await tx.orderItem.createMany({
@@ -161,9 +171,9 @@ export async function POST(request: Request) {
     }
     return NextResponse.json(response)
   } catch (err) {
-    console.error('[POST /api/checkout]', err)
+    console.error(ROUTE_LOG_LABELS.checkout, err)
     return NextResponse.json(
-      { ok: false, error: 'Checkout failed. Please try again.' },
+      { ok: false, error: API_ERRORS.checkoutFailed },
       { status: 500 }
     )
   }

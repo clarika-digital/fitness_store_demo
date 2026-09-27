@@ -1,26 +1,15 @@
 'use client'
 
-import { Dumbbell } from 'lucide-react'
 import { useNavStore } from '@/store/nav-store'
-
-const SHOP_LINKS = [
-  { label: 'Whey Protein', slug: 'protein' },
-  { label: 'Pre-Workout', slug: 'pre-workout' },
-  { label: 'Creatine', slug: 'creatine' },
-  { label: 'Amino Acids', slug: 'amino' },
-  { label: 'Accessories', slug: 'accessories' },
-  { label: 'Bundles & Sets', slug: 'bundles' },
-]
-
-const HELP_LINKS = [
-  { label: 'Shipping & Returns', slug: 'shipping' as const },
-  { label: 'FAQ', slug: 'faq' as const },
-  { label: 'About FUELD', slug: 'about' as const },
-]
-
-const LEGAL = ['Imprint', 'Privacy Policy', 'Terms & Conditions', 'Right of Withdrawal']
-
-const PAYMENTS = ['VISA', 'Mastercard', 'PayPal', 'Klarna', 'Apple Pay']
+import { FOOTER_COPY, BRAND_MARK_COPY, BREADCRUMB_COPY } from '@/data/copy/chrome'
+import {
+  FOOTER_HELP_LINKS,
+  FOOTER_LEGAL_FALLBACK_VIEW,
+  FOOTER_LEGAL_LINKS,
+  FOOTER_SHOP_LINKS,
+} from '@/data/navigation'
+import { PAYMENT_BADGES, SITE } from '@/data/site'
+import { Icon } from '@/core/icon'
 
 export function Footer() {
   const navigate = useNavStore((s) => s.navigate)
@@ -33,26 +22,28 @@ export function Footer() {
             <button
               onClick={() => navigate({ name: 'home' })}
               className="mb-3 flex items-center gap-1.5"
-              aria-label="FUELD — go to homepage"
+              aria-label={BRAND_MARK_COPY.ariaLabel}
             >
-              <Dumbbell size={20} className="text-primary" />
+              <Icon name={BRAND_MARK_COPY.icon} size={20} className="text-primary" />
               <span className="text-lg font-extrabold tracking-tight text-white">
-                FUELD<span className="text-primary">.</span>
+                {SITE.wordmark}
+                <span className="text-primary">{SITE.wordmarkSuffix}</span>
               </span>
             </button>
             <p className="text-xs leading-relaxed">
-              Premium sports nutrition, curated for people who train. Official ESN
-              partner — lab-tested quality from Germany.
+              {SITE.tagline} {SITE.blurb}
             </p>
           </div>
 
-          <nav aria-label="Shop categories">
-            <h3 className="mb-3 text-xs font-bold uppercase tracking-widest text-white">Shop</h3>
+          <nav aria-label={FOOTER_COPY.shopAriaLabel}>
+            <h3 className="mb-3 text-xs font-bold uppercase tracking-widest text-white">
+              {FOOTER_COPY.shopHeading}
+            </h3>
             <ul className="space-y-2">
-              {SHOP_LINKS.map((l) => (
-                <li key={l.slug}>
+              {FOOTER_SHOP_LINKS.map((l) => (
+                <li key={l.view.name === 'category' ? l.view.slug : l.label}>
                   <button
-                    onClick={() => navigate({ name: 'category', slug: l.slug })}
+                    onClick={() => navigate(l.view)}
                     className="text-xs hover:text-white"
                   >
                     {l.label}
@@ -62,13 +53,15 @@ export function Footer() {
             </ul>
           </nav>
 
-          <nav aria-label="Help and company">
-            <h3 className="mb-3 text-xs font-bold uppercase tracking-widest text-white">Help</h3>
+          <nav aria-label={FOOTER_COPY.helpAriaLabel}>
+            <h3 className="mb-3 text-xs font-bold uppercase tracking-widest text-white">
+              {FOOTER_COPY.helpHeading}
+            </h3>
             <ul className="space-y-2">
-              {HELP_LINKS.map((l) => (
-                <li key={l.slug}>
+              {FOOTER_HELP_LINKS.map((l) => (
+                <li key={l.view.name === 'page' ? l.view.slug : l.label}>
                   <button
-                    onClick={() => navigate({ name: 'page', slug: l.slug })}
+                    onClick={() => navigate(l.view)}
                     className="text-xs hover:text-white"
                   >
                     {l.label}
@@ -80,23 +73,23 @@ export function Footer() {
 
           <div>
             <h3 className="mb-3 text-xs font-bold uppercase tracking-widest text-white">
-              Contact
+              {FOOTER_COPY.contactHeading}
             </h3>
             <address className="text-xs not-italic leading-relaxed">
-              FUELD Nutrition GmbH
+              {SITE.legalName}
               <br />
-              Musterstraße 12, 10999 Berlin
+              {SITE.address.street}, {SITE.address.zip} {SITE.address.city}
               <br />
-              support@fueld.example
+              {SITE.supportEmail}
               <br />
-              Mon–Fri, 9:00–17:00
+              {SITE.supportHours}
             </address>
           </div>
         </div>
 
         <div className="mt-10 flex flex-col gap-4 border-t border-zinc-800 pt-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-wrap items-center gap-2">
-            {PAYMENTS.map((p) => (
+            {PAYMENT_BADGES.map((p) => (
               <span
                 key={p}
                 className="rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-[10px] font-semibold tracking-wide text-zinc-300"
@@ -106,10 +99,10 @@ export function Footer() {
             ))}
           </div>
           <div className="flex flex-wrap gap-x-4 gap-y-1">
-            {LEGAL.map((l) => (
+            {FOOTER_LEGAL_LINKS.map((l) => (
               <button
                 key={l}
-                onClick={() => navigate({ name: 'page', slug: 'faq' })}
+                onClick={() => navigate(FOOTER_LEGAL_FALLBACK_VIEW)}
                 className="text-[11px] text-zinc-500 hover:text-white"
               >
                 {l}
@@ -118,8 +111,7 @@ export function Footer() {
           </div>
         </div>
         <p className="mt-4 text-[11px] text-zinc-600">
-          © {new Date().getFullYear()} FUELD Nutrition GmbH. All prices incl. VAT, excl.
-          shipping. Food supplements are no substitute for a balanced diet.
+          {FOOTER_COPY.copyright(new Date().getFullYear())}
         </p>
       </div>
     </footer>

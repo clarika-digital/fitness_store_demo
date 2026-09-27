@@ -1,7 +1,9 @@
 'use client'
 
+import { FLAVOR_SWATCH_COPY } from '@/data/copy/product'
 import { cn } from '@/lib/utils'
 
+/** Colour swatch + name pill used to pick a flavor. */
 export function FlavorSwatch({
   color,
   name,
@@ -23,15 +25,15 @@ export function FlavorSwatch({
       onClick={disabled ? undefined : onClick}
       disabled={disabled}
       aria-pressed={selected}
-      aria-label={`Flavor ${name}${disabled ? ' (out of stock)' : ''}`}
-      title={disabled ? `${name} — out of stock` : name}
+      aria-label={FLAVOR_SWATCH_COPY.ariaLabel(name, Boolean(disabled))}
+      title={FLAVOR_SWATCH_COPY.title(name, Boolean(disabled))}
       className={cn(
         'group relative flex items-center gap-2 rounded-lg border px-2.5 py-2 text-left transition-all',
         size === 'md' ? 'min-w-[130px] flex-1' : '',
         selected
           ? 'border-primary ring-1 ring-primary bg-primary/5'
           : 'border-border hover:border-zinc-400 bg-white',
-        disabled && 'opacity-40 cursor-not-allowed'
+        disabled && 'cursor-not-allowed opacity-40'
       )}
     >
       <span
@@ -50,8 +52,8 @@ export function FlavorSwatch({
         {name}
       </span>
       {disabled && (
-        <span className="absolute inset-x-0 text-[10px] text-center text-red-600 font-medium">
-          out of stock
+        <span className="absolute inset-x-0 text-center text-[10px] font-medium text-red-600">
+          {FLAVOR_SWATCH_COPY.outOfStockLabel}
         </span>
       )}
     </button>

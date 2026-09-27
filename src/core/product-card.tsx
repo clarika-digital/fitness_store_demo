@@ -7,11 +7,18 @@ import { useCartStore } from '@/store/cart-store'
 import { useToast } from '@/hooks/use-toast'
 import { formatEUR, perKg } from '@/lib/format'
 import type { ProductCardData } from '@/lib/types'
+import {
+  NO_FLAVOR_LABEL,
+  PRODUCT_CARD_COPY,
+  QUICK_ADD_FLAVOR_LABEL,
+} from '@/data'
+import { IMAGE_SIZES } from '@/data/images'
 import { RatingStars } from './rating-stars'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
+/** Catalog tile: image, badges, rating, price and a quick-add button. */
 export function ProductCard({
   product,
   className,
@@ -40,13 +47,13 @@ export function ProductCard({
       name: product.name,
       brand: product.brand,
       image: product.image,
-      flavor: product.flavorCount > 0 ? 'Mix' : '—',
+      flavor: product.flavorCount > 0 ? QUICK_ADD_FLAVOR_LABEL : NO_FLAVOR_LABEL,
       sizeLabel: size.label,
       unitPrice: size.price,
     })
     toast({
-      title: 'Added to cart',
-      description: `${product.brand} ${product.name}`,
+      title: PRODUCT_CARD_COPY.toast.title,
+      description: PRODUCT_CARD_COPY.toast.description(product.brand, product.name),
     })
   }
 
@@ -54,7 +61,11 @@ export function ProductCard({
     <article
       role="button"
       tabIndex={0}
-      aria-label={`${product.brand} ${product.name}, from ${formatEUR(product.priceFrom)}`}
+      aria-label={PRODUCT_CARD_COPY.ariaLabel(
+        product.brand,
+        product.name,
+        formatEUR(product.priceFrom)
+      )}
       onClick={() => navigate({ name: 'product', slug: product.slug })}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -72,25 +83,25 @@ export function ProductCard({
           src={product.image}
           alt={product.name}
           fill
-          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+          sizes={IMAGE_SIZES.productCard}
           className="object-cover transition-transform duration-300 group-hover:scale-105"
         />
         <div className="absolute left-2 top-2 flex flex-col items-start gap-1">
           {product.isBestseller && (
             <Badge className="bg-primary text-[10px] font-bold uppercase tracking-wide text-white hover:bg-primary">
-              Bestseller
+              {PRODUCT_CARD_COPY.bestsellerBadge}
             </Badge>
           )}
           {saving && (
             <Badge className="bg-zinc-900 text-[10px] font-bold text-white hover:bg-zinc-900">
-              Save {formatEUR(saving)}
+              {PRODUCT_CARD_COPY.savePrefix} {formatEUR(saving)}
             </Badge>
           )}
         </div>
         {!product.inStock && (
           <div className="absolute inset-0 flex items-center justify-center bg-white/60">
             <span className="rounded-full bg-zinc-900 px-3 py-1 text-xs font-semibold text-white">
-              Out of stock
+              {PRODUCT_CARD_COPY.outOfStock}
             </span>
           </div>
         )}
@@ -104,7 +115,9 @@ export function ProductCard({
           <span className="flex items-center gap-1 text-[11px] text-zinc-500">
             <RatingStars rating={product.rating} size={11} />
             <span className="font-medium text-zinc-700">{product.rating.toFixed(1)}</span>
-            <span className="hidden text-zinc-400 sm:inline">({product.reviewCount.toLocaleString()})</span>
+            <span className="hidden text-zinc-400 sm:inline">
+              ({product.reviewCount.toLocaleString()})
+            </span>
           </span>
         </div>
         <h3 className="text-sm font-bold leading-tight text-zinc-900 group-hover:text-primary">
@@ -127,12 +140,14 @@ export function ProductCard({
               </div>
               <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[11px] text-zinc-500">
                 {kg && <span>{formatEUR(kg)} / kg</span>}
-                {product.flavorCount > 1 && <span>· {product.flavorCount} flavors</span>}
+                {product.flavorCount > 1 && (
+                  <span>{PRODUCT_CARD_COPY.flavorCount(product.flavorCount)}</span>
+                )}
               </div>
             </div>
             <Button
               size="icon"
-              aria-label={`Add ${product.name} to cart`}
+              aria-label={PRODUCT_CARD_COPY.addAriaLabel(product.name)}
               onClick={quickAdd}
               disabled={!product.inStock}
               className="h-9 w-9 shrink-0 rounded-lg"

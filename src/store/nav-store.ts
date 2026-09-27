@@ -2,6 +2,8 @@
 
 import { create } from 'zustand'
 import type { View } from '@/lib/types'
+import { HOME_VIEW } from '@/data/navigation'
+import { NAV_CONFIG } from '@/data/navigation'
 
 type NavState = {
   view: View
@@ -11,18 +13,24 @@ type NavState = {
   canBack: () => boolean
 }
 
+const LAST_ENTRY_OFFSET = 1
+const NO_ENTRIES = 0
+
 export const useNavStore = create<NavState>((set, get) => ({
-  view: { name: 'home' },
+  view: HOME_VIEW,
   history: [],
   navigate: (v) =>
-    set((state) => ({ view: v, history: [...state.history, state.view].slice(-20) })),
+    set((state) => ({
+      view: v,
+      history: [...state.history, state.view].slice(-NAV_CONFIG.historyLimit),
+    })),
   back: () =>
     set((state) => {
-      const prev = state.history[state.history.length - 1]
-      if (!prev) return { view: { name: 'home' }, history: [] }
-      return { view: prev, history: state.history.slice(0, -1) }
+      const prev = state.history[state.history.length - LAST_ENTRY_OFFSET]
+      if (!prev) return { view: HOME_VIEW, history: [] }
+      return { view: prev, history: state.history.slice(0, -LAST_ENTRY_OFFSET) }
     }),
-  canBack: () => get().history.length > 0,
+  canBack: () => get().history.length > NO_ENTRIES,
 }))
 
 export function viewKey(v: View): string {

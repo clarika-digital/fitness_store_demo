@@ -93,6 +93,15 @@ async function main() {
     'Package',
     '/images/products/starter-bundle.png'
   )
+  const equipment = await cat(
+    'equipment',
+    'Equipment',
+    'Training gear that earns its place in the rack — bands, belts, sleeves and ropes.',
+    7,
+    false,
+    'Dumbbell',
+    '/images/products/resistance-bands.png'
+  )
 
   type FlavorSeed = { name: string; color: string; inStock?: boolean; rating?: number; reviewCount?: number }
   type SizeSeed = { label: string; sublabel?: string; price: number; comparePrice?: number; servings?: number; popular?: boolean }
@@ -649,9 +658,143 @@ async function main() {
     ],
   })
 
+  // ────────────────────────── EQUIPMENT ───────────────────────
+
+  await product({
+    slug: 'resistance-band-set',
+    name: 'Resistance Band Set',
+    brand: 'FUELD',
+    categoryId: equipment.id,
+    tagline: 'Five latex-free loop bands — warm up, add load and stretch anywhere.',
+    description:
+      'A complete loop-band set for home or commercial gyms: five resistances that stack together, so one band covers a warm-up and five cover a heavy hip thrust. Latex-free and coated so they will not grip or flake, with the tension printed on every band. Comes in a carry bag that fits next to your shaker.',
+    usage:
+      'Anchor a loop band to a rack post, door anchor or sturdy table leg. Add bands together for heavier loads.',
+    image: '/images/products/resistance-bands.png',
+    badges: ['Latex-free', 'Travel size'],
+    rating: 4.7,
+    reviewCount: 268,
+    sortOrder: 0,
+    sizes: [
+      { label: 'Light', sublabel: '5–15 kg', price: 19.9 },
+      { label: 'Medium', sublabel: '10–30 kg', price: 24.9, popular: true },
+      { label: 'Heavy', sublabel: '20–60 kg', price: 29.9 },
+    ],
+    reviews: [
+      {
+        author: 'Marek S.',
+        rating: 5,
+        title: 'Survives daily use',
+        text: 'The coating is solid — no cracking after months of hip thrusts. Medium is the one I use for everything.',
+      },
+      {
+        author: 'Ines B.',
+        rating: 4,
+        title: 'Great for travel',
+        text: 'Bags down to nothing in a backpack. Wish the light set had been a bit heavier.',
+      },
+    ],
+  })
+
+  await product({
+    slug: 'lifting-belt',
+    name: 'Lifting Belt',
+    brand: 'FUELD',
+    categoryId: equipment.id,
+    tagline: 'Competition-grade belt with a single quick-release buckle.',
+    description:
+      'Ten millimetre genuine leather with a single metal buckle that holds position through the hardest set of the session. Broken in from day one, so there is no frustrating break-in period. Stiff enough to take the load off your lower back on heavy squats, rows and presses without rolling up.',
+    usage:
+      'Wrap snug around the hips, not the stomach, and buckle over the navel. Tighten between sets.',
+    image: '/images/products/lifting-belt.png',
+    badges: ['Genuine leather'],
+    rating: 4.9,
+    reviewCount: 431,
+    sortOrder: 1,
+    sizes: [
+      { label: 'S/M', sublabel: 'Up to 85 cm', price: 34.9 },
+      { label: 'L/XL', sublabel: '85–110 cm', price: 34.9 },
+    ],
+    reviews: [
+      {
+        author: 'Tobias K.',
+        rating: 5,
+        title: 'No break-in period',
+        text: 'Stiff out of the box like it should be. Squatted 180 kg with it in the first week.',
+      },
+      {
+        author: 'Ruth A.',
+        rating: 5,
+        title: 'The buckle stays put',
+        text: 'Single quick release instead of a double prong. I can adjust it between sets without taking it off.',
+      },
+    ],
+  })
+
+  await product({
+    slug: 'knee-sleeves',
+    name: 'Knee Sleeves',
+    brand: 'FUELD',
+    categoryId: equipment.id,
+    tagline: '7 mm compression sleeves that keep warm-ups honest and knees quiet.',
+    description:
+      'Seven millimetres of compression that support the knee through warm-ups and heavy sets without cutting circulation. Reinforced stitching at the flex point means they do not blow out at the seam, and the ribbed cuff stops them sliding down mid-session. Sold as a pair.',
+    usage:
+      'Pull on before your first warm-up set and keep them on through your working sets.',
+    image: '/images/products/knee-sleeves.png',
+    badges: ['Sold as a pair'],
+    rating: 4.8,
+    reviewCount: 197,
+    sortOrder: 2,
+    sizes: [
+      { label: 'S/M', sublabel: '33–38 cm', price: 22.9 },
+      { label: 'L/XL', sublabel: '38–46 cm', price: 22.9 },
+    ],
+    reviews: [
+      {
+        author: 'Ola M.',
+        rating: 5,
+        title: 'Knees feel solid',
+        text: 'Difference is obvious on heavy squats. No rolling down, even on leg day.',
+      },
+    ],
+  })
+
+  await product({
+    slug: 'speed-jump-rope',
+    name: 'Speed Jump Rope',
+    brand: 'FUELD',
+    categoryId: equipment.id,
+    tagline: 'Ball-bearing speed rope with adjustable cable and coated handles.',
+    description:
+      'A ball-bearing speed rope that turns smoothly and adjusts in seconds: cut the cable to your height, twist-lock it and it stays put. Coated handles stop the cable from drilling into your palms, and the whole thing weighs almost nothing, so it lives in a gym bag or a desk drawer.',
+    usage:
+      'Step over the cable, keep elbows close to the ribs and turn from the wrists.',
+    image: '/images/products/jump-rope.png',
+    badges: ['Adjustable'],
+    rating: 4.6,
+    reviewCount: 143,
+    sortOrder: 3,
+    sizes: [{ label: 'One size', sublabel: 'Up to 2.5 m', price: 14.9 }],
+    reviews: [
+      {
+        author: 'Janek P.',
+        rating: 5,
+        title: 'Fast and smooth',
+        text: 'Ball bearings make a real difference on intervals. Adjusting the length took about a minute.',
+      },
+      {
+        author: 'Sofia L.',
+        rating: 4,
+        title: 'Cable mark-free',
+        text: 'Coating means it does not leave a black line on the floor. Handles could be a touch longer.',
+      },
+    ],
+  })
+
   const stats = await db.product.count()
   const reviewStats = await db.review.count()
-  console.log(`✅ Seed complete: ${stats} products, ${reviewStats} written reviews, 7 categories`)
+  console.log(`✅ Seed complete: ${stats} products, ${reviewStats} written reviews, 8 categories`)
 }
 
 main()

@@ -1,15 +1,13 @@
 'use client'
 
 import Image from 'next/image'
-import { ArrowRight, FlaskConical, Sparkles, Star } from 'lucide-react'
 import { useNavStore } from '@/store/nav-store'
+import { PROTEIN_VIEW, ABOUT_VIEW } from '@/data/navigation'
+import { HERO_COPY } from '@/data/copy/home'
+import { HERO_BRAND } from '@/data/site'
+import { IMAGES, IMAGE_SIZES } from '@/data/images'
+import { Icon } from '@/core/icon'
 import { Button } from '@/components/ui/button'
-
-const trustChips = [
-  { icon: Star, label: '4.8 · 12,000+ reviews', iconClass: 'fill-amber-400 text-amber-400' },
-  { icon: Sparkles, label: '25+ flavors', iconClass: 'text-primary' },
-  { icon: FlaskConical, label: 'Lab-tested in Germany', iconClass: 'text-primary' },
-]
 
 export function Hero() {
   const navigate = useNavStore((s) => s.navigate)
@@ -21,42 +19,45 @@ export function Hero() {
           {/* Copy */}
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
-              Official ESN Dealer
+              {HERO_COPY.eyebrow}
             </p>
             <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
-              Whey, done properly.
+              {HERO_COPY.title}
             </h1>
             <p className="mt-4 max-w-xl text-base leading-relaxed text-zinc-400 sm:text-lg">
-              ESN Designer Whey — 76% protein, perfectly soluble, legendary flavors. The protein
-              thousands of lifters reorder every month.
+              {HERO_COPY.body}
             </p>
 
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
               <Button
                 size="lg"
                 className="h-11 px-7 text-sm font-bold"
-                onClick={() => navigate({ name: 'category', slug: 'protein' })}
+                onClick={() => navigate(PROTEIN_VIEW)}
               >
-                Shop Whey Protein
-                <ArrowRight size={16} />
+                {HERO_COPY.primaryCta}
+                <Icon name="arrow-right" size={16} />
               </Button>
               <Button
                 size="lg"
                 variant="outline"
                 className="h-11 border-zinc-700 bg-transparent px-7 text-sm font-semibold text-white hover:bg-zinc-800 hover:text-white"
-                onClick={() => navigate({ name: 'page', slug: 'about' })}
+                onClick={() => navigate(ABOUT_VIEW)}
               >
-                Our quality promise
+                {HERO_COPY.secondaryCta}
               </Button>
             </div>
 
-            <ul className="mt-7 flex flex-wrap gap-2" aria-label="Store trust highlights">
-              {trustChips.map((chip) => (
+            <ul className="mt-7 flex flex-wrap gap-2" aria-label={HERO_COPY.chipsAriaLabel}>
+              {HERO_COPY.trustChips.map((chip) => (
                 <li
                   key={chip.label}
                   className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-zinc-800 bg-zinc-900/80 px-3 text-xs font-medium text-zinc-300"
                 >
-                  <chip.icon size={13} strokeWidth={chip.icon === Star ? 0 : 2} className={chip.iconClass} />
+                  <Icon
+                    name={chip.icon}
+                    size={13}
+                    className={chip.tone === 'star' ? 'text-amber-400' : 'text-primary'}
+                  />
                   {chip.label}
                 </li>
               ))}
@@ -71,11 +72,11 @@ export function Hero() {
             />
             <div className="relative aspect-[2/1] overflow-hidden rounded-2xl border border-zinc-800 shadow-2xl shadow-black/50">
               <Image
-                src="/images/hero.png"
-                alt="ESN Designer Whey tubs in a dark gym scene"
+                src={IMAGES.hero.src}
+                alt={IMAGES.hero.alt}
                 fill
                 priority
-                sizes="(max-width: 1024px) 100vw, 50vw"
+                sizes={IMAGE_SIZES.hero}
                 className="object-cover"
               />
             </div>

@@ -1,18 +1,26 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Minus, Plus, RotateCcw, Star, Truck, Zap } from 'lucide-react'
-import type { ProductDetailData } from '@/lib/types'
-import { formatEUR, perKg, perServing } from '@/lib/format'
+import { NO_FLAVOR_LABEL, QTY_MAX, QTY_MIN } from '@/data/commerce'
+import { DATE_LOCALE } from '@/data/commerce'
+import { PRODUCT_CARD_COPY, PURCHASE_PANEL_COPY } from '@/data/copy/product'
+import { PDP_TRUST_ROW } from '@/data/products'
 import { useCartStore } from '@/store/cart-store'
 import { useToast } from '@/hooks/use-toast'
-import { RatingStars } from '@/components/store/shared/rating-stars'
-import { FlavorSwatch } from '@/components/store/shared/flavor-swatch'
+import { formatEUR, perKg, perServing } from '@/lib/format'
+import type { ProductDetailData } from '@/lib/types'
+import {
+  FlavorSwatch,
+  Icon,
+  PriceBlock,
+  QuantityStepper,
+  RatingStars,
+} from '@/core'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
-const MAX_QTY = 20
+const FIRST_INDEX = 0
 
 export function PurchasePanel({ product }: { product: ProductDetailData }) {
   const add = useCartStore((s) => s.add)
@@ -26,25 +34,25 @@ export function PurchasePanel({ product }: { product: ProductDetailData }) {
   )
   const defaultSizeIdx = useMemo(() => {
     const i = product.sizes.findIndex((s) => s.popular)
-    return i >= 0 ? i : 0
+    return i >= FIRST_INDEX ? i : FIRST_INDEX
   }, [product.sizes])
 
   const [flavor, setFlavor] = useState<string | null>(firstAvailable)
   const [sizeIdx, setSizeIdx] = useState<number>(defaultSizeIdx)
-  const [qty, setQty] = useState(1)
+  const [qty, setQty] = useState(QTY_MIN)
 
-  const size = product.sizes[sizeIdx] ?? product.sizes[0]
+  const size = product.sizes[sizeIdx] ?? product.sizes[FIRST_INDEX]
   const kg = size ? perKg(size) : null
   const serving = size ? perServing(size) : null
-  const saving =
-    size?.comparePrice && size.comparePrice > size.price
-      ? Math.round((size.comparePrice - size.price) * 100) / 100
-      : null
   const selectedFlavor = flavors.find((f) => f.name === flavor) ?? null
   const outOfStock = !product.inStock
+  const lineTotal = formatEUR((size?.price ?? 0) * qty)
+  const reviewCount = product.reviewCount.toLocaleString(DATE_LOCALE)
 
   const scrollToReviews = () => {
-    document.getElementById('reviews')?.scrollIntoView({ behavior: 'smooth' })
+    document
+      .getElementById(PURCHASE_PANEL_COPY.reviewsAnchorId)
+      ?.scrollIntoView({ behavior: 'smooth' })
   }
 
   const handleAdd = () => {
@@ -56,15 +64,20 @@ export function PurchasePanel({ product }: { product: ProductDetailData }) {
         name: product.name,
         brand: product.brand,
         image: product.image,
-        flavor: flavor ?? '—',
+        flavor: flavor ?? NO_FLAVOR_LABEL,
         sizeLabel: size.label,
         unitPrice: size.price,
       },
       qty
     )
     toast({
-      title: 'Added to cart',
-      description: `${product.brand} ${product.name} · ${flavor ?? '—'} · ${size.label}`,
+      title: PRODUCT_CARD_COPY.toast.title,
+      description: PURCHASE_PANEL_COPY.toast.description(
+        product.brand,
+        product.name,
+        flavor ?? NO_FLAVOR_LABEL,
+        size.label
+      ),
     })
     openCart()
   }
@@ -89,9 +102,9 @@ export function PurchasePanel({ product }: { product: ProductDetailData }) {
             size="sm"
             onClick={scrollToReviews}
             className="h-auto p-0 text-sm text-zinc-500"
-            aria-label={`Scroll to ${product.reviewCount.toLocaleString()} reviews`}
+            aria-label={PURCHASE_PANEL_COPY.reviewsScrollLabel(reviewCount)}
           >
-            {product.reviewCount.toLocaleString()} reviews
+            {PURCHASE_PANEL_COPY.reviewsLink(reviewCount)}
           </Button>
         </div>
         <p className="mt-3 leading-relaxed text-zinc-600">{product.tagline}</p>
@@ -100,31 +113,19 @@ export function PurchasePanel({ product }: { product: ProductDetailData }) {
       {/* Price block */}
       {size && (
         <div className="rounded-xl border border-zinc-200 bg-zinc-50/60 p-4">
-          <div className="flex flex-wrap items-baseline gap-2.5">
-            <span className="text-3xl font-extrabold tracking-tight text-zinc-900">
-              {formatEUR(size.price)}
-            </span>
-            {size.comparePrice && size.comparePrice > size.price && (
-              <span className="text-base text-zinc-400 line-through">
-                {formatEUR(size.comparePrice)}
-              </span>
-            )}
-            {saving && (
-              <Badge className="bg-zinc-900 text-xs font-bold text-white hover:bg-zinc-900">
-                Save {formatEUR(saving)}
-              </Badge>
-            )}
-          </div>
+          <PriceBlock price={size.price} comparePrice={size.comparePrice} size="lg" />
           {(kg !== null || serving !== null) && (
             <div className="mt-2 flex flex-wrap gap-2">
               {kg !== null && (
                 <span className="rounded-full bg-zinc-200/70 px-2.5 py-1 text-xs font-medium text-zinc-600">
-                  {formatEUR(kg)}/kg
+                  {formatEUR(kg)}
+                  {PURCHASE_PANEL_COPY.perKgSuffix}
                 </span>
               )}
               {serving !== null && (
                 <span className="rounded-full bg-zinc-200/70 px-2.5 py-1 text-xs font-medium text-zinc-600">
-                  {formatEUR(serving)}/serving
+                  {formatEUR(serving)}
+                  {PURCHASE_PANEL_COPY.perServingSuffix}
                 </span>
               )}
             </div>
@@ -136,11 +137,12 @@ export function PurchasePanel({ product }: { product: ProductDetailData }) {
       {flavors.length > 0 && (
         <div>
           <p className="mb-2 text-sm font-bold text-zinc-900">
-            Flavor: <span className="font-semibold text-zinc-700">{flavor}</span>
+            {PURCHASE_PANEL_COPY.flavorPrefix}{' '}
+            <span className="font-semibold text-zinc-700">{flavor}</span>
           </p>
           <div
             role="radiogroup"
-            aria-label="Choose flavor"
+            aria-label={PURCHASE_PANEL_COPY.flavorAriaLabel}
             className="flex flex-wrap gap-2"
           >
             {flavors.map((f) => (
@@ -157,14 +159,11 @@ export function PurchasePanel({ product }: { product: ProductDetailData }) {
           </div>
           {selectedFlavor?.rating != null && (
             <p className="mt-2 flex items-center gap-1.5 text-xs text-zinc-500">
-              <Star
-                size={12}
-                strokeWidth={0}
-                className="fill-amber-400"
-                aria-hidden="true"
-              />
-              {selectedFlavor.rating.toFixed(1)} from{' '}
-              {(selectedFlavor.reviewCount ?? 0).toLocaleString()} flavor reviews
+              <Icon name="star" size={12} />
+              {PURCHASE_PANEL_COPY.flavorRating(
+                selectedFlavor.rating.toFixed(1),
+                (selectedFlavor.reviewCount ?? 0).toLocaleString(DATE_LOCALE)
+              )}
             </p>
           )}
         </div>
@@ -173,10 +172,12 @@ export function PurchasePanel({ product }: { product: ProductDetailData }) {
       {/* Size selector */}
       {product.sizes.length > 0 && (
         <div>
-          <p className="mb-2 text-sm font-bold text-zinc-900">Size</p>
+          <p className="mb-2 text-sm font-bold text-zinc-900">
+            {PURCHASE_PANEL_COPY.sizeLabel}
+          </p>
           <div
             role="radiogroup"
-            aria-label="Choose size"
+            aria-label={PURCHASE_PANEL_COPY.sizeAriaLabel}
             className="flex flex-wrap gap-2"
           >
             {product.sizes.map((s, i) => (
@@ -197,7 +198,7 @@ export function PurchasePanel({ product }: { product: ProductDetailData }) {
                   {s.label}
                   {s.popular && (
                     <Badge className="bg-primary text-[10px] font-bold uppercase tracking-wide text-white hover:bg-primary">
-                      Popular
+                      {PURCHASE_PANEL_COPY.popularBadge}
                     </Badge>
                   )}
                 </span>
@@ -212,66 +213,43 @@ export function PurchasePanel({ product }: { product: ProductDetailData }) {
 
       {/* Quantity + CTA */}
       <div className="flex items-stretch gap-3">
-        <div className="flex items-center rounded-lg border border-zinc-300">
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Decrease quantity"
-            disabled={qty <= 1}
-            onClick={() => setQty((q) => Math.max(1, q - 1))}
-            className="h-11 w-11 rounded-md hover:bg-zinc-100"
-          >
-            <Minus size={16} />
-          </Button>
-          <span
-            aria-live="polite"
-            aria-label={`Quantity ${qty}`}
-            className="w-8 text-center text-sm font-bold tabular-nums text-zinc-900"
-          >
-            {qty}
-          </span>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Increase quantity"
-            disabled={qty >= MAX_QTY}
-            onClick={() => setQty((q) => Math.min(MAX_QTY, q + 1))}
-            className="h-11 w-11 rounded-md hover:bg-zinc-100"
-          >
-            <Plus size={16} />
-          </Button>
-        </div>
+        <QuantityStepper
+          value={qty}
+          onChange={setQty}
+          min={QTY_MIN}
+          max={QTY_MAX}
+          decreaseAriaLabel={PURCHASE_PANEL_COPY.decreaseAriaLabel}
+          increaseAriaLabel={PURCHASE_PANEL_COPY.increaseAriaLabel}
+          quantityAriaLabel={PURCHASE_PANEL_COPY.quantityAriaLabel(qty)}
+        />
         <Button
           size="lg"
           disabled={outOfStock}
           onClick={handleAdd}
           aria-label={
             outOfStock
-              ? `${product.name} is out of stock`
-              : `Add ${qty} × ${product.name} to cart for ${formatEUR((size?.price ?? 0) * qty)}`
+              ? PURCHASE_PANEL_COPY.outOfStockAriaLabel(product.name)
+              : PURCHASE_PANEL_COPY.addAriaLabel(qty, product.name, lineTotal)
           }
           className="h-12 min-h-11 flex-1 text-base font-extrabold"
         >
           {outOfStock
-            ? 'Out of stock'
-            : `Add to cart · ${formatEUR((size?.price ?? 0) * qty)}`}
+            ? PURCHASE_PANEL_COPY.outOfStockCta
+            : PURCHASE_PANEL_COPY.addToCart(lineTotal)}
         </Button>
       </div>
 
       {/* Trust row */}
-      <ul className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs font-medium text-zinc-600">
-        <li className="flex items-center gap-1.5">
-          <Truck size={15} className="text-primary" aria-hidden="true" />
-          Free shipping over €59
-        </li>
-        <li className="flex items-center gap-1.5">
-          <Zap size={15} className="text-primary" aria-hidden="true" />
-          Ships in 24h
-        </li>
-        <li className="flex items-center gap-1.5">
-          <RotateCcw size={15} className="text-primary" aria-hidden="true" />
-          30-day returns
-        </li>
+      <ul
+        className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs font-medium text-zinc-600"
+        aria-label={PURCHASE_PANEL_COPY.trustAriaLabel}
+      >
+        {PDP_TRUST_ROW.map((item) => (
+          <li key={item.label} className="flex items-center gap-1.5">
+            <Icon name={item.icon} size={15} className="text-primary" />
+            {item.label}
+          </li>
+        ))}
       </ul>
     </div>
   )

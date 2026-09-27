@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '@/lib/db'
+import { WELCOME_PROMO_CODE } from '@/data/commerce'
+import { API_ERRORS, ROUTE_LOG_LABELS } from '@/data/api'
 
 export const runtime = 'nodejs'
 
@@ -13,13 +15,16 @@ export async function POST(request: Request) {
   try {
     body = await request.json()
   } catch {
-    return NextResponse.json({ ok: false, error: 'Invalid request body' }, { status: 400 })
+    return NextResponse.json(
+      { ok: false, error: API_ERRORS.invalidBody },
+      { status: 400 }
+    )
   }
 
   const parsed = newsletterSchema.safeParse(body)
   if (!parsed.success) {
     return NextResponse.json(
-      { ok: false, error: 'Please enter a valid email address.' },
+      { ok: false, error: API_ERRORS.invalidEmail },
       { status: 400 }
     )
   }
@@ -32,11 +37,11 @@ export async function POST(request: Request) {
       update: {},
       create: { email },
     })
-    return NextResponse.json({ ok: true, code: 'WELCOME10' })
+    return NextResponse.json({ ok: true, code: WELCOME_PROMO_CODE })
   } catch (err) {
-    console.error('[POST /api/newsletter]', err)
+    console.error(ROUTE_LOG_LABELS.newsletter, err)
     return NextResponse.json(
-      { ok: false, error: 'Subscription failed. Please try again.' },
+      { ok: false, error: API_ERRORS.subscriptionFailed },
       { status: 500 }
     )
   }

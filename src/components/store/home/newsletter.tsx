@@ -2,13 +2,14 @@
 
 import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
-import { Check, Copy } from 'lucide-react'
 import { subscribeNewsletter } from '@/lib/api-client'
+import { useToast } from '@/hooks/use-toast'
+import { EMAIL_PATTERN, VALIDATION_MESSAGES, CHECKOUT_FIELD_PLACEHOLDERS } from '@/data/validation'
+import { WELCOME_PROMO_CODE, COPY_FEEDBACK_MS } from '@/data/commerce'
+import { NEWSLETTER_COPY } from '@/data/copy/home'
+import { Icon } from '@/core/icon'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { useToast } from '@/hooks/use-toast'
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export function Newsletter() {
   const { toast } = useToast()
@@ -21,18 +22,18 @@ export function Newsletter() {
   const mutation = useMutation({
     mutationFn: subscribeNewsletter,
     onSuccess: (res) => {
-      setSubscribedCode(res.code ?? 'WELCOME10')
+      setSubscribedCode(res.code ?? WELCOME_PROMO_CODE)
       setApiError(null)
       toast({
-        title: 'Welcome aboard!',
-        description: 'Your 10% welcome code is ready below.',
+        title: NEWSLETTER_COPY.toast.successTitle,
+        description: NEWSLETTER_COPY.toast.successBody,
       })
     },
     onError: (err: Error) => {
-      const message = err.message || 'Something went wrong. Please try again.'
+      const message = err.message || NEWSLETTER_COPY.toast.fallbackError
       setApiError(message)
       toast({
-        title: 'Subscription failed',
+        title: NEWSLETTER_COPY.toast.errorTitle,
         description: message,
         variant: 'destructive',
       })
@@ -43,11 +44,11 @@ export function Newsletter() {
     e.preventDefault()
     const value = email.trim()
     if (!value) {
-      setValidationError('Please enter your email address.')
+      setValidationError(VALIDATION_MESSAGES.emailEmpty)
       return
     }
-    if (!EMAIL_RE.test(value)) {
-      setValidationError('That doesn’t look like a valid email address.')
+    if (!EMAIL_PATTERN.test(value)) {
+      setValidationError(VALIDATION_MESSAGES.emailLooksWrong)
       return
     }
     setValidationError(null)
@@ -60,14 +61,14 @@ export function Newsletter() {
       await navigator.clipboard.writeText(subscribedCode)
       setCopied(true)
       toast({
-        title: 'Code copied',
-        description: `${subscribedCode} is on your clipboard.`,
+        title: NEWSLETTER_COPY.toast.copyTitle,
+        description: NEWSLETTER_COPY.toast.copyBody(subscribedCode),
       })
-      setTimeout(() => setCopied(false), 2000)
+      setTimeout(() => setCopied(false), COPY_FEEDBACK_MS)
     } catch {
       toast({
-        title: 'Copy failed',
-        description: 'Please copy the code manually.',
+        title: NEWSLETTER_COPY.toast.copyErrorTitle,
+        description: NEWSLETTER_COPY.toast.copyErrorBody,
         variant: 'destructive',
       })
     }
@@ -80,14 +81,12 @@ export function Newsletter() {
           {subscribedCode ? (
             <div className="flex flex-col items-center">
               <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
-                <Check size={22} aria-hidden />
+                <Icon name="check" size={22} />
               </span>
               <h3 className="mt-4 text-2xl font-extrabold tracking-tight text-zinc-900">
-                You’re in — the code is yours.
+                {NEWSLETTER_COPY.successTitle}
               </h3>
-              <p className="mt-2 text-sm text-zinc-500">
-                Enter this code at checkout to claim 10% off your first order.
-              </p>
+              <p className="mt-2 text-sm text-zinc-500">{NEWSLETTER_COPY.successBody}</p>
               <div className="mt-5 flex items-center gap-3 rounded-xl border-2 border-dashed border-primary/40 bg-white px-4 py-3">
                 <span className="font-mono text-lg font-bold tracking-[0.2em] text-zinc-900">
                   {subscribedCode}
@@ -97,20 +96,20 @@ export function Newsletter() {
                   variant="outline"
                   className="min-h-11 gap-1.5 border-zinc-300"
                   onClick={copyCode}
-                  aria-label={`Copy discount code ${subscribedCode}`}
+                  aria-label={NEWSLETTER_COPY.copyAriaLabel(subscribedCode)}
                 >
-                  {copied ? <Check size={14} /> : <Copy size={14} />}
-                  {copied ? 'Copied' : 'Copy'}
+                  <Icon name={copied ? 'check' : 'copy'} size={14} />
+                  {copied ? NEWSLETTER_COPY.copiedLabel : NEWSLETTER_COPY.copyLabel}
                 </Button>
               </div>
             </div>
           ) : (
             <>
               <h3 className="text-2xl font-extrabold tracking-tight text-zinc-900 sm:text-3xl">
-                Get 10% off your first order
+                {NEWSLETTER_COPY.title}
               </h3>
               <p className="mx-auto mt-2 max-w-md text-sm text-zinc-500">
-                Flavor drops, restock alerts and training fuel tips. No spam.
+                {NEWSLETTER_COPY.subtitle}
               </p>
               <form
                 onSubmit={submit}
@@ -121,8 +120,8 @@ export function Newsletter() {
                   type="email"
                   inputMode="email"
                   autoComplete="email"
-                  placeholder="you@example.com"
-                  aria-label="Email address"
+                  placeholder={CHECKOUT_FIELD_PLACEHOLDERS.email}
+                  aria-label={NEWSLETTER_COPY.emailAriaLabel}
                   aria-invalid={Boolean(validationError)}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -134,7 +133,9 @@ export function Newsletter() {
                   className="h-11 px-7 text-sm font-bold"
                   disabled={mutation.isPending}
                 >
-                  {mutation.isPending ? 'Claiming…' : 'Claim 10%'}
+                  {mutation.isPending
+                    ? NEWSLETTER_COPY.pendingCta
+                    : NEWSLETTER_COPY.cta}
                 </Button>
               </form>
               {validationError && (
@@ -147,9 +148,7 @@ export function Newsletter() {
                   {apiError}
                 </p>
               )}
-              <p className="mt-4 text-[11px] text-zinc-400">
-                One email per week, max. Unsubscribe anytime.
-              </p>
+              <p className="mt-4 text-[11px] text-zinc-400">{NEWSLETTER_COPY.finePrint}</p>
             </>
           )}
         </div>

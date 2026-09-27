@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { Providers } from "@/components/providers";
+import { SEO, SITE } from "@/data/site";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,18 +16,18 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "FUELD — Premium Sports Nutrition | ESN Whey Protein & More",
-  description:
-    "Official ESN dealer: whey protein, pre-workout, creatine and more. Lab-tested quality, fast dispatch, free shipping over €59.",
-  keywords: ["whey protein", "ESN", "sports nutrition", "creatine", "pre-workout", "supplements"],
-  authors: [{ name: "FUELD Nutrition" }],
+  title: SEO.title,
+  description: SEO.description,
+  keywords: [...SEO.keywords],
+  authors: [{ name: SEO.author }],
   icons: {
-    icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
+    icon: SEO.iconUrl,
   },
   openGraph: {
-    title: "FUELD — Premium Sports Nutrition",
-    description: "Whey protein first: ESN Designer Whey, Isoclear, creatine & stacks.",
-    siteName: "FUELD",
+    title: SEO.openGraphTitle,
+    description: SEO.openGraphDescription,
+    siteName: SEO.siteName,
+    locale: SEO.locale,
     type: "website",
   },
 };
@@ -37,7 +38,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={SEO.locale} suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
       >
