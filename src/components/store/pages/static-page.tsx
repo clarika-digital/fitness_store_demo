@@ -13,8 +13,8 @@ import {
   PAGE_META,
   SHIPPING_PAGE_COPY,
 } from '@/data/copy/pages'
-import { useNavStore } from '@/store/nav-store'
-import { formatEUR } from '@/lib/format'
+import { useNavigate } from '@/hooks/use-nav'
+import { useMoney } from '@/hooks/use-money'
 import { BreadcrumbNav, Icon } from '@/core'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -33,15 +33,16 @@ import {
   TableRow,
 } from '@/components/ui/table'
 
-const SHIPPING_COST_ROWS = [
+/** Built per render so the amounts follow the shopper's selected locale. */
+const shippingCostRows = (money: (value: number) => string) => [
   ...SHIPPING_METHODS.map((method) => ({
     label: method.label,
-    cost: formatEUR(method.cost),
+    cost: money(method.cost),
     delivery: method.description,
     isFree: false,
   })),
   {
-    label: SHIPPING_PAGE_COPY.freeRowLabel(formatEUR(FREE_SHIPPING_THRESHOLD)),
+    label: SHIPPING_PAGE_COPY.freeRowLabel(money(FREE_SHIPPING_THRESHOLD)),
     cost: SHIPPING_PAGE_COPY.freeLabel,
     delivery: SHIPPING_METHODS[0].description,
     isFree: true,
@@ -51,6 +52,9 @@ const SHIPPING_COST_ROWS = [
 /* ── Shipping & Returns ──────────────────────────────────────────────── */
 
 function ShippingPageContent() {
+  const money = useMoney()
+  const rows = shippingCostRows(money)
+
   return (
     <>
       <Card>
@@ -71,7 +75,7 @@ function ShippingPageContent() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {SHIPPING_COST_ROWS.map((row) => (
+              {rows.map((row) => (
                 <TableRow key={row.label}>
                   <TableCell className="font-medium text-zinc-900">{row.label}</TableCell>
                   <TableCell
@@ -96,7 +100,7 @@ function ShippingPageContent() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm leading-relaxed text-zinc-600">
-          {SHIPPING_PAGE_COPY.dispatchParagraphs.map((paragraph) => (
+          {SHIPPING_PAGE_COPY.dispatchParagraphs(money).map((paragraph) => (
             <p key={paragraph.slice(0, PAGE_CHROME_COPY.paragraphKeyLength)}>
               {paragraph}
             </p>
@@ -136,7 +140,7 @@ function ShippingPageContent() {
 /* ── About ───────────────────────────────────────────────────────────── */
 
 function AboutPageContent() {
-  const navigate = useNavStore((s) => s.navigate)
+  const navigate = useNavigate()
 
   return (
     <>
@@ -185,6 +189,8 @@ function AboutPageContent() {
 /* ── FAQ ─────────────────────────────────────────────────────────────── */
 
 function FaqPageContent() {
+  const money = useMoney()
+
   return (
     <Card>
       <CardContent className="px-6">
@@ -194,7 +200,7 @@ function FaqPageContent() {
           className="w-full"
           aria-label={FAQ_COPY.ariaLabel}
         >
-          {FAQ_COPY.items.map((item, i) => (
+          {FAQ_COPY.items(money).map((item, i) => (
             <AccordionItem
               key={item.q}
               value={`${FAQ_COPY.itemValuePrefix}${i}`}

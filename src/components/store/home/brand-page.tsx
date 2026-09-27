@@ -3,7 +3,7 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { fetchProducts } from '@/lib/api-client'
-import { useNavStore } from '@/store/nav-store'
+import { useNavigate } from '@/hooks/use-nav'
 import { HERO_CATEGORY_SLUG } from '@/data/categories'
 import { BREADCRUMB_COPY } from '@/data/copy/chrome'
 import { BRAND_PAGE_COPY } from '@/data/copy/catalog'
@@ -30,7 +30,7 @@ function titleize(slug: string) {
 }
 
 export function BrandPage({ slug }: { slug: string }) {
-  const navigate = useNavStore((s) => s.navigate)
+  const navigate = useNavigate()
   const isEsn = slug === HERO_BRAND.slug
   const brandLabel = isEsn ? HERO_BRAND.label : titleize(slug)
 

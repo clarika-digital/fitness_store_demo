@@ -1,6 +1,6 @@
 'use client'
 
-import { useNavStore } from '@/store/nav-store'
+import { useNavigate } from '@/hooks/use-nav'
 import { BRAND_STRIP_COPY } from '@/data/copy/home'
 import { BRAND_QUALITY_BADGES } from '@/data/products'
 import { HERO_BRAND } from '@/data/site'
@@ -8,7 +8,7 @@ import { Icon } from '@/core/icon'
 import { Button } from '@/components/ui/button'
 
 export function BrandStrip() {
-  const navigate = useNavStore((s) => s.navigate)
+  const navigate = useNavigate()
 
   return (
     <section className="border-y border-zinc-200 bg-white py-8">

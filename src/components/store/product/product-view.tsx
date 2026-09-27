@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { fetchProduct } from '@/lib/api-client'
 import { BREADCRUMB_COPY } from '@/data/copy/chrome'
+import { useMoney } from '@/hooks/use-money'
 import { PDP_ACCORDIONS_COPY, PRODUCT_VIEW_COPY } from '@/data/copy/product'
 import { PRODUCT_NOT_FOUND_COPY } from '@/data/copy/states'
 import { GALLERY_THUMB_COUNT } from '@/data/products'
@@ -15,7 +16,7 @@ import {
   ProductThumbnail,
   SectionHeading,
 } from '@/core'
-import { useNavStore } from '@/store/nav-store'
+import { useNavigate } from '@/hooks/use-nav'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Accordion,
@@ -36,7 +37,8 @@ import { ReviewSection } from './review-section'
 // ─── Main view ───────────────────────────────────────────────────────────────
 
 export function ProductView({ slug }: { slug: string }) {
-  const navigate = useNavStore((s) => s.navigate)
+  const navigate = useNavigate()
+  const money = useMoney()
   const { data, isLoading, isError } = useQuery({
     queryKey: ['product', slug],
     queryFn: () => fetchProduct(slug),
@@ -194,7 +196,7 @@ export function ProductView({ slug }: { slug: string }) {
               {PDP_ACCORDIONS_COPY.shipping}
             </AccordionTrigger>
             <AccordionContent className="text-sm leading-relaxed text-zinc-600">
-              {PDP_ACCORDIONS_COPY.shippingBody}
+              {PDP_ACCORDIONS_COPY.shippingBody(money)}
             </AccordionContent>
           </AccordionItem>
         </Accordion>

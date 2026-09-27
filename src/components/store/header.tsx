@@ -2,10 +2,10 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import Image from 'next/image'
-import { useNavStore } from '@/store/nav-store'
+import { useNavigate, useView } from '@/hooks/use-nav'
 import { cartCount, useCartStore } from '@/store/cart-store'
 import { searchProducts } from '@/lib/api-client'
-import { formatEUR } from '@/lib/format'
+import { useMoney } from '@/hooks/use-money'
 import type { ProductCardData, View } from '@/lib/types'
 import { CART_BADGE_MAX, SEARCH_DEBOUNCE_MS, SEARCH_MIN_LENGTH } from '@/data/commerce'
 import {
@@ -20,13 +20,15 @@ import { IMAGE_SIZES } from '@/data/images'
 import { HERO_BRAND, SITE } from '@/data/site'
 import { Icon } from '@/core/icon'
 import { UspBar } from './usp-bar'
+import { LocaleSelector } from './locale-selector'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { cn } from '@/lib/utils'
 
 function SearchBox({ className, autoFocus }: { className?: string; autoFocus?: boolean }) {
-  const navigate = useNavStore((s) => s.navigate)
+  const navigate = useNavigate()
+  const money = useMoney()
   const [q, setQ] = useState('')
   const [results, setResults] = useState<ProductCardData[]>([])
   const [open, setOpen] = useState(false)
@@ -127,7 +129,7 @@ function SearchBox({ className, autoFocus }: { className?: string; autoFocus?: b
                       </span>
                     </span>
                     <span className="text-sm font-bold text-zinc-900">
-                      {formatEUR(p.priceFrom)}
+                      {money(p.priceFrom)}
                     </span>
                   </button>
                 </li>
@@ -177,8 +179,8 @@ function CartButton() {
 }
 
 export function Header() {
-  const navigate = useNavStore((s) => s.navigate)
-  const view = useNavStore((s) => s.view)
+  const navigate = useNavigate()
+  const view = useView()
   const [mobileOpen, setMobileOpen] = useState(false)
 
   const go = (v: View) => {
@@ -224,6 +226,10 @@ export function Header() {
                 >
                   {HERO_BRAND.shopLabel}
                 </button>
+                <div className="my-2 border-t border-zinc-100" />
+                <div className="px-3 py-1.5">
+                  <LocaleSelector className="w-full justify-start" />
+                </div>
               </nav>
             </SheetContent>
           </Sheet>
@@ -245,7 +251,7 @@ export function Header() {
           <nav aria-label={HEADER_COPY.mainNavAriaLabel} className="ml-4 hidden items-center gap-0.5 lg:flex">
             {MAIN_NAV.map((item) => {
               const slug = item.view.name === 'category' ? item.view.slug : null
-              const active = slug !== null && view.name === 'category' && view.slug === slug
+              const active = slug !== null && view?.name === 'category' && view.slug === slug
               return (
                 <div key={item.label} className="group relative">
                   <button
@@ -291,6 +297,7 @@ export function Header() {
 
           <div className="ml-auto flex items-center gap-2">
             <SearchBox className="hidden w-64 md:block" />
+            <LocaleSelector />
             <CartButton />
           </div>
         </div>

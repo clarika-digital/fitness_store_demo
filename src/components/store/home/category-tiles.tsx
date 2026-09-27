@@ -1,7 +1,7 @@
 'use client'
 
 import Image from 'next/image'
-import { useNavStore } from '@/store/nav-store'
+import { useNavigate } from '@/hooks/use-nav'
 import { CATEGORY_TILES, type CategoryTile } from '@/data/categories'
 import { CATEGORY_TILES_COPY } from '@/data/copy/home'
 import { IMAGE_SIZES } from '@/data/images'
@@ -14,7 +14,7 @@ function tileSizes(tile: CategoryTile) {
 }
 
 export function CategoryTiles() {
-  const navigate = useNavStore((s) => s.navigate)
+  const navigate = useNavigate()
 
   return (
     <section className="bg-white py-12 lg:py-16">

@@ -1,6 +1,11 @@
 /** Copy for the three client-routed static pages: shipping, about and FAQ. */
 
-import { FREE_SHIPPING_THRESHOLD } from '../commerce'
+import {
+  EXPRESS_SHIPPING,
+  FREE_SHIPPING_THRESHOLD,
+  STANDARD_SHIPPING,
+  type MoneyFormat,
+} from '../commerce'
 import { SITE } from '../site'
 import type { StaticPageSlug } from '../navigation'
 
@@ -37,9 +42,9 @@ export const SHIPPING_PAGE_COPY = {
   freeRowLabel: (threshold: string) => `Standard, orders over ${threshold}`,
   freeLabel: 'FREE',
   dispatchTitle: 'Dispatch',
-  dispatchParagraphs: [
+  dispatchParagraphs: (money: MoneyFormat) => [
     'Orders placed before 14:00 (Mon–Fri) leave our warehouse within 24 hours. You’ll receive a tracking link by email the moment your parcel is handed to the carrier — usually DHL, sometimes DPD for express shipments.',
-    `Standard delivery takes 2–4 business days within Germany, Austria and Switzerland. Express orders placed before 14:00 arrive the next business day. Shipping is free on standard orders over €${FREE_SHIPPING_THRESHOLD}.`,
+    `Standard delivery takes 2–4 business days within Germany, Austria and Switzerland. Express orders placed before 14:00 arrive the next business day. Shipping is free on standard orders over ${money(FREE_SHIPPING_THRESHOLD)}.`,
   ],
   returnsTitle: 'Returns & Right of Withdrawal',
   returnsIntro:
@@ -86,14 +91,14 @@ export const ABOUT_PAGE_COPY = {
 
 export const FAQ_COPY = {
   ariaLabel: 'Frequently asked questions',
-  items: [
+  items: (money: MoneyFormat) => [
     {
       q: 'How long does delivery take?',
       a: 'Standard delivery takes 2–4 business days, express orders arrive the next business day if placed before 14:00. You get a tracking link by email as soon as your parcel ships.',
     },
     {
       q: 'When do I get free shipping?',
-      a: `Standard shipping is free on orders over €${FREE_SHIPPING_THRESHOLD} (after discounts) — below that it’s €4.90. Express is always €9.90 regardless of order value.`,
+      a: `Standard shipping is free on orders over ${money(FREE_SHIPPING_THRESHOLD)} (after discounts) — below that it’s ${money(STANDARD_SHIPPING)}. Express is always ${money(EXPRESS_SHIPPING)} regardless of order value.`,
     },
     {
       q: 'Which whey is right for me — cutting or bulking?',

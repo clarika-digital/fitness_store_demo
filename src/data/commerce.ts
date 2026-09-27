@@ -4,10 +4,84 @@
  * Never duplicate these values in a component; import from here.
  */
 
-export const CURRENCY = 'EUR'
-/** en-IE renders `€12.90` with a non-breaking space, as the copy expects. */
-export const MONEY_LOCALE = 'en-IE'
-export const DATE_LOCALE = 'en-GB'
+/**
+ * All prices in the database, the cart and the API are stored in this currency.
+ * The locale selector only changes how an amount is *rendered* — see
+ * `FX_RATES` for the conversion.
+ */
+export const BASE_CURRENCY = 'EUR'
+
+/**
+ * Static, hand-maintained FX rates: how many units of a currency one
+ * `BASE_CURRENCY` is worth. Mid-market reference, September 2026
+ * (1 EUR ≈ 13.2 GHS). There is no live rate feed, so update these by hand.
+ */
+export const FX_RATES = {
+  EUR: 1,
+  GHS: 13.2,
+} as const
+
+export type CurrencyCode = keyof typeof FX_RATES
+
+export type LocaleConfig = {
+  /** BCP-47 tag used for `Intl` formatting and the `<html lang>` attribute. */
+  tag: string
+  /** Name shown in the locale selector. */
+  label: string
+  /** Compact label for the closed selector. */
+  short: string
+  currency: CurrencyCode
+  /** ISO country code, shown next to the label. */
+  region: string
+}
+
+export const LOCALES = {
+  'en-GH': {
+    tag: 'en-GH',
+    label: 'English · Ghana',
+    short: 'EN',
+    currency: 'GHS',
+    region: 'GH',
+  },
+  'de-DE': {
+    tag: 'de-DE',
+    label: 'Deutsch · Deutschland',
+    short: 'DE',
+    currency: 'EUR',
+    region: 'DE',
+  },
+} as const satisfies Record<string, LocaleConfig>
+
+export type LocaleKey = keyof typeof LOCALES
+
+export const LOCALE_KEYS = Object.keys(LOCALES) as LocaleKey[]
+
+/** Ghanaian cedi — the store's default. */
+export const DEFAULT_LOCALE_KEY: LocaleKey = 'en-GH'
+
+export const DEFAULT_LOCALE: LocaleConfig = LOCALES[DEFAULT_LOCALE_KEY]
+
+export function isLocaleKey(value: unknown): value is LocaleKey {
+  return typeof value === 'string' && value in LOCALES
+}
+
+export function localeConfig(key: string): LocaleConfig {
+  return LOCALES[key as LocaleKey] ?? DEFAULT_LOCALE
+}
+
+/**
+ * A money formatter bound to one locale: takes a *base* (EUR) amount and
+ * returns the rendered amount. Copy in `src/data/copy` receives one of these
+ * instead of a hardcoded currency string, so a string never has to be
+ * re-generated per locale.
+ */
+export type MoneyFormat = (baseAmount: number) => string
+
+/** Currency the default locale prices in. Server code and metadata use this. */
+export const CURRENCY = DEFAULT_LOCALE.currency
+/** `en-GH` renders `GH₵123.40`; `de-DE` renders `123,40 €`. */
+export const MONEY_LOCALE = DEFAULT_LOCALE.tag
+export const DATE_LOCALE = DEFAULT_LOCALE.tag
 
 export const FREE_SHIPPING_THRESHOLD = 59
 export const STANDARD_SHIPPING = 4.9

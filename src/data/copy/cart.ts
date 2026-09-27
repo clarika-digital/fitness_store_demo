@@ -2,6 +2,7 @@
 
 import { FREE_SHIPPING_THRESHOLD } from '../commerce'
 import { NO_FLAVOR_LABEL } from '../commerce'
+import type { MoneyFormat } from '../commerce'
 
 export const CART_COPY = {
   titleId: 'cart-drawer-description',
@@ -18,7 +19,8 @@ export const CART_COPY = {
   flavorPrefix: 'Flavor:',
   noFlavorLabel: NO_FLAVOR_LABEL,
   subtotal: 'Subtotal',
-  shippingNote: `Shipping calculated at checkout — free over €${FREE_SHIPPING_THRESHOLD}.`,
+  shippingNote: (money: MoneyFormat) =>
+    `Shipping calculated at checkout — free over ${money(FREE_SHIPPING_THRESHOLD)}.`,
   checkoutCta: 'Go to checkout',
   continueShopping: 'Continue shopping',
   decreaseAriaLabel: (name: string) => `Decrease quantity of ${name}`,

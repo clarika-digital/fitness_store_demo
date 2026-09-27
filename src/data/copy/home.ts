@@ -1,6 +1,6 @@
 /** Copy for the home page sections, in render order. */
 
-import { FREE_SHIPPING_THRESHOLD } from '../commerce'
+import type { MoneyFormat } from '../commerce'
 import type { IconName } from '../icons'
 import { BUNDLE_PROMO } from '../products'
 import { HERO_BRAND } from '../site'
@@ -31,8 +31,8 @@ export const TRUST_STRIP_COPY = {
   items: [
     {
       icon: 'truck',
-      title: `Free shipping over €${FREE_SHIPPING_THRESHOLD}`,
-      sub: 'On every order within Germany',
+      title: 'Worldwide Shipping Available',
+      sub: 'Tracked delivery to most countries',
     },
     {
       icon: 'shield-check',
@@ -68,8 +68,9 @@ export const BESTSELLERS_COPY = {
 export const BUNDLE_BANNER_COPY = {
   eyebrow: 'Limited bundle',
   title: 'Whey Starter Bundle',
-  body: 'Designer Whey 1 kg + Fuel’d Shaker — €4.90 cheaper together. Everything a first order needs.',
-  saveLabel: `Save €${BUNDLE_PROMO.saving.toFixed(2)}`,
+  body: (money: MoneyFormat) =>
+    `Designer Whey 1 kg + Fuel’d Shaker — ${money(BUNDLE_PROMO.saving)} cheaper together. Everything a first order needs.`,
+  saveLabel: (money: MoneyFormat) => `Save ${money(BUNDLE_PROMO.saving)}`,
   cta: 'Get the bundle',
 } as const
 

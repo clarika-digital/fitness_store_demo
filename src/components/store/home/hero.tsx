@@ -1,7 +1,7 @@
 'use client'
 
 import Image from 'next/image'
-import { useNavStore } from '@/store/nav-store'
+import { useNavigate } from '@/hooks/use-nav'
 import { PROTEIN_VIEW, ABOUT_VIEW } from '@/data/navigation'
 import { HERO_COPY } from '@/data/copy/home'
 import { HERO_BRAND } from '@/data/site'
@@ -10,7 +10,7 @@ import { Icon } from '@/core/icon'
 import { Button } from '@/components/ui/button'
 
 export function Hero() {
-  const navigate = useNavStore((s) => s.navigate)
+  const navigate = useNavigate()
 
   return (
     <section className="bg-zinc-950">

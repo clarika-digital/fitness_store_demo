@@ -6,6 +6,8 @@
  * file owns the marketing copy the listing pages render.
  */
 
+import type { MoneyFormat } from './commerce'
+
 export const CATEGORY_META = {
   protein: {
     title: 'Protein',
@@ -131,7 +133,7 @@ export const PROTEIN_COMPARISON = {
     { slug: 'esn-isoclear', name: 'Isoclear' },
     { slug: 'esn-vegan-protein', name: 'Vegan Protein' },
   ],
-  rows: [
+  rows: (money: MoneyFormat) => [
     { label: 'Protein per 100 g', values: ['76 g', '82 g', '68 g'], emphasis: false },
     {
       label: 'Texture',
@@ -144,7 +146,11 @@ export const PROTEIN_COMPARISON = {
       values: ['Taste & everyday', 'Cutting & summer', 'Plant-based diets'],
       emphasis: false,
     },
-    { label: 'From', values: ['€29.90', '€34.90', '€32.90'], emphasis: true },
+    {
+      label: 'From',
+      values: [29.9, 34.9, 32.9].map(money),
+      emphasis: true,
+    },
   ],
   sampleBoxSlug: 'whey-sample-box',
 } as const

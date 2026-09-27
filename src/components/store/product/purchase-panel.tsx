@@ -2,12 +2,12 @@
 
 import { useMemo, useState } from 'react'
 import { NO_FLAVOR_LABEL, QTY_MAX, QTY_MIN } from '@/data/commerce'
-import { DATE_LOCALE } from '@/data/commerce'
 import { PRODUCT_CARD_COPY, PURCHASE_PANEL_COPY } from '@/data/copy/product'
 import { PDP_TRUST_ROW } from '@/data/products'
 import { useCartStore } from '@/store/cart-store'
 import { useToast } from '@/hooks/use-toast'
-import { formatEUR, perKg, perServing } from '@/lib/format'
+import { perKg, perServing } from '@/lib/format'
+import { useLocale, useMoney } from '@/hooks/use-money'
 import type { ProductDetailData } from '@/lib/types'
 import {
   FlavorSwatch,
@@ -23,6 +23,8 @@ import { cn } from '@/lib/utils'
 const FIRST_INDEX = 0
 
 export function PurchasePanel({ product }: { product: ProductDetailData }) {
+  const money = useMoney()
+  const locale = useLocale()
   const add = useCartStore((s) => s.add)
   const openCart = useCartStore((s) => s.open)
   const { toast } = useToast()
@@ -46,8 +48,8 @@ export function PurchasePanel({ product }: { product: ProductDetailData }) {
   const serving = size ? perServing(size) : null
   const selectedFlavor = flavors.find((f) => f.name === flavor) ?? null
   const outOfStock = !product.inStock
-  const lineTotal = formatEUR((size?.price ?? 0) * qty)
-  const reviewCount = product.reviewCount.toLocaleString(DATE_LOCALE)
+  const lineTotal = money((size?.price ?? 0) * qty)
+  const reviewCount = product.reviewCount.toLocaleString(locale.tag)
 
   const scrollToReviews = () => {
     document
@@ -118,13 +120,13 @@ export function PurchasePanel({ product }: { product: ProductDetailData }) {
             <div className="mt-2 flex flex-wrap gap-2">
               {kg !== null && (
                 <span className="rounded-full bg-zinc-200/70 px-2.5 py-1 text-xs font-medium text-zinc-600">
-                  {formatEUR(kg)}
+                  {money(kg)}
                   {PURCHASE_PANEL_COPY.perKgSuffix}
                 </span>
               )}
               {serving !== null && (
                 <span className="rounded-full bg-zinc-200/70 px-2.5 py-1 text-xs font-medium text-zinc-600">
-                  {formatEUR(serving)}
+                  {money(serving)}
                   {PURCHASE_PANEL_COPY.perServingSuffix}
                 </span>
               )}
@@ -162,7 +164,7 @@ export function PurchasePanel({ product }: { product: ProductDetailData }) {
               <Icon name="star" size={12} />
               {PURCHASE_PANEL_COPY.flavorRating(
                 selectedFlavor.rating.toFixed(1),
-                (selectedFlavor.reviewCount ?? 0).toLocaleString(DATE_LOCALE)
+                (selectedFlavor.reviewCount ?? 0).toLocaleString(locale.tag)
               )}
             </p>
           )}

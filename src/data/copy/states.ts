@@ -37,3 +37,10 @@ export const BRAND_EMPTY_COPY = {
     `No ${brand} products in stock right now — browse our categories instead.`,
   backToHome: 'Back to home',
 } as const
+
+export const NOT_FOUND_COPY = {
+  title: 'Page not found',
+  body: 'That link doesn’t lead anywhere. It may have moved, or the address may be mistyped.',
+  backToHome: 'Back to home',
+  icon: 'search-x' as IconName,
+} as const

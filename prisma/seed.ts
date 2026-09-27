@@ -1,5 +1,5 @@
 /**
- * Seed script for the FUELD fitness supplement store.
+ * Seed script for the Clarika Fitness supplement store.
  * Run: bun prisma/seed.ts
  */
 import { PrismaClient } from '@prisma/client'
@@ -564,7 +564,7 @@ async function main() {
   await product({
     slug: 'fueld-shaker',
     name: 'Fuel\u2019d Shaker 700 ml',
-    brand: 'FUELD',
+    brand: 'Clarika Fitness',
     categoryId: accessories.id,
     tagline: 'Leak-proof shaker with steel mixing ball — dishwasher-safe, BPA-free.',
     description:
@@ -663,7 +663,7 @@ async function main() {
   await product({
     slug: 'resistance-band-set',
     name: 'Resistance Band Set',
-    brand: 'FUELD',
+    brand: 'Clarika Fitness',
     categoryId: equipment.id,
     tagline: 'Five latex-free loop bands — warm up, add load and stretch anywhere.',
     description:
@@ -699,7 +699,7 @@ async function main() {
   await product({
     slug: 'lifting-belt',
     name: 'Lifting Belt',
-    brand: 'FUELD',
+    brand: 'Clarika Fitness',
     categoryId: equipment.id,
     tagline: 'Competition-grade belt with a single quick-release buckle.',
     description:
@@ -734,7 +734,7 @@ async function main() {
   await product({
     slug: 'knee-sleeves',
     name: 'Knee Sleeves',
-    brand: 'FUELD',
+    brand: 'Clarika Fitness',
     categoryId: equipment.id,
     tagline: '7 mm compression sleeves that keep warm-ups honest and knees quiet.',
     description:
@@ -763,7 +763,7 @@ async function main() {
   await product({
     slug: 'speed-jump-rope',
     name: 'Speed Jump Rope',
-    brand: 'FUELD',
+    brand: 'Clarika Fitness',
     categoryId: equipment.id,
     tagline: 'Ball-bearing speed rope with adjustable cable and coated handles.',
     description:

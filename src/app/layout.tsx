@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     title: SEO.openGraphTitle,
     description: SEO.openGraphDescription,
     siteName: SEO.siteName,
-    locale: SEO.locale,
+    locale: SEO.ogLocale,
     type: "website",
   },
 };
@@ -38,7 +38,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang={SEO.locale} suppressHydrationWarning>
+    <html lang={SEO.htmlLang} suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
       >

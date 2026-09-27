@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { fetchProducts } from '@/lib/api-client'
 import type { ProductCardData, SortOption } from '@/lib/types'
-import { useNavStore } from '@/store/nav-store'
+import { useNavigate } from '@/hooks/use-nav'
 import {
   HERO_CATEGORY_SLUG,
   PROTEIN_COMPARISON,
@@ -44,11 +44,13 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { cn } from '@/lib/utils'
+import { useMoney } from '@/hooks/use-money'
 
 // ─── Protein comparison table (protein category only) ────────────────────────
 
 function ProteinComparisonTable() {
-  const navigate = useNavStore((s) => s.navigate)
+  const navigate = useNavigate()
+  const money = useMoney()
 
   return (
     <div
@@ -76,7 +78,7 @@ function ProteinComparisonTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {PROTEIN_COMPARISON.rows.map((row) => (
+            {PROTEIN_COMPARISON.rows(money).map((row) => (
               <TableRow key={row.label}>
                 <TableCell className="text-xs font-semibold text-zinc-500">
                   {row.label}
@@ -130,7 +132,7 @@ function ProteinComparisonTable() {
 // ─── Main view ───────────────────────────────────────────────────────────────
 
 export function CategoryView({ slug, q }: { slug: string; q?: string }) {
-  const navigate = useNavStore((s) => s.navigate)
+  const navigate = useNavigate()
   const [sort, setSort] = useState<SortOption>(DEFAULT_SORT)
   const [type, setType] = useState<ProteinTypeFilter>('all')
 

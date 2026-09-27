@@ -1,6 +1,6 @@
 'use client'
 
-import { useNavStore } from '@/store/nav-store'
+import { useNavigate } from '@/hooks/use-nav'
 import { FOOTER_COPY, BRAND_MARK_COPY, BREADCRUMB_COPY } from '@/data/copy/chrome'
 import {
   FOOTER_HELP_LINKS,
@@ -12,7 +12,7 @@ import { PAYMENT_BADGES, SITE } from '@/data/site'
 import { Icon } from '@/core/icon'
 
 export function Footer() {
-  const navigate = useNavStore((s) => s.navigate)
+  const navigate = useNavigate()
 
   return (
     <footer className="mt-auto bg-zinc-950 text-zinc-400">
@@ -80,7 +80,21 @@ export function Footer() {
               <br />
               {SITE.address.street}, {SITE.address.zip} {SITE.address.city}
               <br />
-              {SITE.supportEmail}
+              <a
+                href={SITE.whatsapp.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline-offset-2 hover:text-white hover:underline"
+              >
+                {FOOTER_COPY.whatsappLabel}: {SITE.whatsapp.display}
+              </a>
+              <br />
+              <a
+                href={`mailto:${SITE.supportEmail}`}
+                className="underline-offset-2 hover:text-white hover:underline"
+              >
+                {SITE.supportEmail}
+              </a>
               <br />
               {SITE.supportHours}
             </address>
@@ -112,6 +126,17 @@ export function Footer() {
         </div>
         <p className="mt-4 text-[11px] text-zinc-600">
           {FOOTER_COPY.copyright(new Date().getFullYear())}
+        </p>
+        <p className="mt-1 text-[11px] text-zinc-600">
+          {FOOTER_COPY.poweredByPrefix}{' '}
+          <a
+            href={SITE.credits.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline-offset-2 hover:text-zinc-400 hover:underline"
+          >
+            {SITE.credits.label}
+          </a>
         </p>
       </div>
     </footer>

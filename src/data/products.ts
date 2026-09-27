@@ -7,9 +7,7 @@
  */
 
 import type { SortOption } from '@/lib/types'
-import { FREE_SHIPPING_THRESHOLD } from './commerce'
 import type { IconName } from './icons'
-
 export const SORT_OPTIONS: readonly { value: SortOption; label: string }[] = [
   { value: 'popular', label: 'Popular' },
   { value: 'price-asc', label: 'Price ↑' },
@@ -66,7 +64,7 @@ export const BUNDLE_PROMO = {
 
 /** Trust row under the PDP buy button and in the static-page feature list. */
 export const PDP_TRUST_ROW: readonly { label: string; icon: IconName }[] = [
-  { label: `Free shipping over €${FREE_SHIPPING_THRESHOLD}`, icon: 'truck' },
+  { label: 'Worldwide Shipping Available', icon: 'truck' },
   { label: 'Ships in 24h', icon: 'zap' },
   { label: '30-day returns', icon: 'rotate-ccw' },
 ]

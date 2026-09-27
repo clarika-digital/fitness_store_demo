@@ -4,10 +4,12 @@ import { useQuery } from '@tanstack/react-query'
 import { fetchStats } from '@/lib/api-client'
 import { REVIEWS_SECTION_COPY } from '@/data/copy/home'
 import { RATING_MAX } from '@/data/products'
+import { useLocale } from '@/hooks/use-money'
 import { ErrorState, Icon, RatingStars } from '@/core'
 import { Button } from '@/components/ui/button'
 
 export function ReviewsSection() {
+  const locale = useLocale()
   const { data, isPending, isError, refetch } = useQuery({
     queryKey: ['stats'],
     queryFn: fetchStats,
@@ -55,7 +57,7 @@ export function ReviewsSection() {
             </div>
             <RatingStars rating={data.averageRating} size={20} className="mt-4" />
             <p className="mt-3 text-sm text-zinc-400">
-              {REVIEWS_SECTION_COPY.summary(data.reviewCount.toLocaleString())}
+              {REVIEWS_SECTION_COPY.summary(data.reviewCount.toLocaleString(locale.tag))}
             </p>
           </div>
         )}

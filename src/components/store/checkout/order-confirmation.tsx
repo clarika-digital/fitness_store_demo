@@ -4,7 +4,8 @@ import { useRef, useState } from 'react'
 import { DEFAULT_SHIPPING_METHOD } from '@/data/commerce'
 import { HERO_CATEGORY_SLUG } from '@/data/categories'
 import { ORDER_CONFIRMATION_COPY } from '@/data/copy/checkout'
-import { useNavStore } from '@/store/nav-store'
+import { useNavigate } from '@/hooks/use-nav'
+import { useLocale } from '@/hooks/use-money'
 import { estimatedDeliveryText } from '@/lib/format'
 import { Icon } from '@/core'
 import { Button } from '@/components/ui/button'
@@ -13,7 +14,8 @@ import { Separator } from '@/components/ui/separator'
 import { useToast } from '@/hooks/use-toast'
 
 export function OrderConfirmation({ orderNumber }: { orderNumber: string }) {
-  const navigate = useNavStore((s) => s.navigate)
+  const navigate = useNavigate()
+  const locale = useLocale()
   const { toast } = useToast()
   const [copied, setCopied] = useState(false)
   const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -83,7 +85,7 @@ export function OrderConfirmation({ orderNumber }: { orderNumber: string }) {
           <p className="mt-4 text-sm text-zinc-700">
             {ORDER_CONFIRMATION_COPY.estimatedDelivery}{' '}
             <span className="font-bold text-zinc-900">
-              {estimatedDeliveryText(DEFAULT_SHIPPING_METHOD)}
+              {estimatedDeliveryText(DEFAULT_SHIPPING_METHOD, locale.tag)}
             </span>
           </p>
           <p className="mt-1 text-xs text-muted-foreground">

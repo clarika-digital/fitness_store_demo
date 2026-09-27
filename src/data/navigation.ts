@@ -7,8 +7,12 @@
  */
 
 import type { View } from '@/lib/types'
-import { CATEGORY_SLUGS, HERO_CATEGORY_SLUG, type CategorySlug } from './categories'
-import { FREE_SHIPPING_THRESHOLD } from './commerce'
+import {
+  CATEGORY_SLUGS,
+  HERO_CATEGORY_SLUG,
+  SEARCH_CATEGORY_SLUG,
+  type CategorySlug,
+} from './categories'
 import { FEATURED_PRODUCTS } from './products'
 import { HERO_BRAND, SITE } from './site'
 
@@ -105,18 +109,108 @@ export function isStaticPageSlug(value: string): value is StaticPageSlug {
   return (STATIC_PAGE_SLUGS as readonly string[]).includes(value)
 }
 
+/** The landing path. Kept as a constant so route building stays consistent. */
+export const PATH_ROOT = '/'
+
+/** Single-segment path prefixes, and the collection they address. */
+export const PATH_PREFIX = {
+  category: 'category',
+  product: 'product',
+  brand: 'brand',
+  search: 'search',
+  order: 'order',
+  checkout: 'checkout',
+} as const
+
 /** Compact USP strip pinned above the header. */
 export const USP_BAR: readonly { label: string; icon: import('./icons').IconName }[] = [
-  { label: `Free shipping over €${FREE_SHIPPING_THRESHOLD}`, icon: 'truck' },
+  { label: 'Worldwide Shipping Available', icon: 'truck' },
   { label: `Official ${HERO_BRAND.label} dealer — lab-tested quality`, icon: 'shield-check' },
   { label: 'Dispatched in 24h', icon: 'zap' },
 ]
 
-/** Tunables for the client-side navigation model in `store/nav-store`. */
-export const NAV_CONFIG = {
-  /** How many views the back stack keeps. */
-  historyLimit: 20,
-} as const
+/* ── URL scheme ───────────────────────────────────────────────────────────
+ * The path is the single source of truth for "which view am I on", so a
+ * refresh, a deep link and the browser back button all work. These two
+ * functions are the only place that maps between a `View` and a path.
+ */
+
+/**
+ * Path for a view. Always absolute, so `router.push` replaces the whole path
+ * instead of resolving it relative to the current URL. Search lives at
+ * `/search/<query>`; other pages are explicit.
+ */
+export function viewPath(view: View): string {
+  switch (view.name) {
+    case 'home':
+      return PATH_ROOT
+    case 'checkout':
+      return `/${PATH_PREFIX.checkout}`
+    case 'page':
+      return `/${view.slug}`
+    case 'confirmation':
+      return `/${PATH_PREFIX.order}/${encodeURIComponent(view.orderNumber)}`
+    case 'brand':
+      return `/${PATH_PREFIX.brand}/${view.slug}`
+    case 'product':
+      return `/${PATH_PREFIX.product}/${view.slug}`
+    case 'category':
+      if (view.slug === SEARCH_CATEGORY_SLUG) {
+        return view.q ? `/${PATH_PREFIX.search}/${encodeURIComponent(view.q)}` : `/${PATH_PREFIX.search}`
+      }
+      return `/${PATH_PREFIX.category}/${view.slug}`
+  }
+}
+
+/**
+ * View for a path, or `null` when the path is not a storefront route.
+ * `segments` is the pathname split on `/`, with empty parts removed.
+ */
+export function pathView(segments: string[]): View | null {
+  const [head, second] = segments
+
+  if (!head) return HOME_VIEW
+
+  // Single-segment paths: the search index, checkout and the static pages.
+  if (segments.length === 1) {
+    if (head === PATH_PREFIX.search) return { name: 'category', slug: SEARCH_CATEGORY_SLUG }
+    if (head === PATH_PREFIX.checkout) return { name: 'checkout' }
+    if (isStaticPageSlug(head)) return { name: 'page', slug: head }
+    return null
+  }
+
+  if (head === PATH_PREFIX.search) {
+    return { name: 'category', slug: SEARCH_CATEGORY_SLUG, q: safeDecode(second) }
+  }
+  if (segments.length !== 2) return null
+  if (head === PATH_PREFIX.category) return { name: 'category', slug: second }
+  if (head === PATH_PREFIX.product) return { name: 'product', slug: second }
+  if (head === PATH_PREFIX.brand) return { name: 'brand', slug: second }
+  if (head === PATH_PREFIX.order) {
+    return { name: 'confirmation', orderNumber: safeDecode(second) }
+  }
+
+  return null
+}
+
+/** Split a pathname into view segments. */
+export function pathSegments(pathname: string): string[] {
+  return pathname.split('/').filter(Boolean)
+}
+
+/** Stable key for a view, used to reset scroll and to compare navigations. */
+export function viewKey(v: View): string {
+  return viewPath(v)
+}
+
+function safeDecode(value: string): string {
+  try {
+    return decodeURIComponent(value)
+  } catch {
+    // A hand-typed or truncated URL can carry an invalid escape sequence.
+    return value
+  }
+}
 
 /** Destination used by every "go to protein" CTA. */
 export const PROTEIN_VIEW: View = { name: 'category', slug: HERO_CATEGORY_SLUG }

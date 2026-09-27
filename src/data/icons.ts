@@ -22,6 +22,7 @@ export const ICON_NAMES = [
   'credit-card',
   'dumbbell',
   'flask-conical',
+  'globe',
   'hand-heart',
   'lock',
   'loader',

@@ -1,8 +1,8 @@
 'use client'
 
 import Image from 'next/image'
-import { useNavStore } from '@/store/nav-store'
-import { formatEUR } from '@/lib/format'
+import { useNavigate } from '@/hooks/use-nav'
+import { useMoney } from '@/hooks/use-money'
 import { BUNDLE_PROMO } from '@/data/products'
 import { BUNDLE_BANNER_COPY } from '@/data/copy/home'
 import { IMAGES, IMAGE_SIZES } from '@/data/images'
@@ -10,7 +10,8 @@ import { Icon } from '@/core/icon'
 import { Button } from '@/components/ui/button'
 
 export function BundleBanner() {
-  const navigate = useNavStore((s) => s.navigate)
+  const navigate = useNavigate()
+  const money = useMoney()
 
   return (
     <section className="bg-white py-12 lg:py-16">
@@ -29,17 +30,17 @@ export function BundleBanner() {
                 {BUNDLE_BANNER_COPY.title}
               </h3>
               <p className="mt-3 max-w-md text-sm leading-relaxed text-zinc-400">
-                {BUNDLE_BANNER_COPY.body}
+                {BUNDLE_BANNER_COPY.body(money)}
               </p>
               <div className="mt-5 flex flex-wrap items-baseline gap-2">
                 <span className="text-2xl font-extrabold text-white">
-                  {formatEUR(BUNDLE_PROMO.price)}
+                  {money(BUNDLE_PROMO.price)}
                 </span>
                 <span className="text-sm text-zinc-500 line-through">
-                  {formatEUR(BUNDLE_PROMO.comparePrice)}
+                  {money(BUNDLE_PROMO.comparePrice)}
                 </span>
                 <span className="rounded-full bg-primary/15 px-2 py-0.5 text-xs font-bold text-primary">
-                  {BUNDLE_BANNER_COPY.saveLabel}
+                  {BUNDLE_BANNER_COPY.saveLabel(money)}
                 </span>
               </div>
               <Button

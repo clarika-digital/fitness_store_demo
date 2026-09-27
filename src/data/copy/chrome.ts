@@ -1,6 +1,7 @@
 /** Copy for the persistent chrome: USP strip, header and footer. */
 
 import type { IconName } from '../icons'
+import type { LocaleConfig } from '../commerce'
 import { SITE } from '../site'
 
 export const USP_BAR_COPY = {
@@ -21,6 +22,14 @@ export const HEADER_COPY = {
   flavourCount: (n: number) => `${n} flavors`,
 } as const
 
+export const LOCALE_SELECTOR_COPY = {
+  /** Mirrors the `aria-label` on the trigger. */
+  ariaLabel: 'Change language and currency',
+  /** Trigger shows the language code — `EN` or `DE`. */
+  shortLabel: (locale: LocaleConfig) => locale.short,
+  currencyLabel: (locale: LocaleConfig) => locale.currency,
+} as const
+
 export const BREADCRUMB_COPY = {
   ariaLabel: 'Breadcrumb',
   home: 'Home',
@@ -32,8 +41,11 @@ export const FOOTER_COPY = {
   shopHeading: 'Shop',
   helpHeading: 'Help',
   contactHeading: 'Contact',
+  whatsappLabel: 'WhatsApp',
+  /** Prefix for the agency credit; the name and href come from `SITE.credits`. */
+  poweredByPrefix: 'Powered by -',
   copyright: (year: number) =>
-    `© ${year} ${SITE.legalName}. ${SITE.vatNote} ${SITE.disclaimer}`,
+    `c ${year} ${SITE.legalName}. ${SITE.vatNote} ${SITE.disclaimer}`,
   legalFallbackView: 'faq',
 } as const
 

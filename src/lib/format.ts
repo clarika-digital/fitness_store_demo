@@ -1,11 +1,13 @@
 import type { ProductSize } from './types'
 import {
-  CURRENCY,
   DATE_LOCALE,
+  DEFAULT_LOCALE,
+  FX_RATES,
   GRAMS_PER_KG,
-  MONEY_LOCALE,
   MONEY_SCALE,
   PERCENT_SCALE,
+  type CurrencyCode,
+  type LocaleConfig,
 } from '@/data/commerce'
 
 /**
@@ -16,25 +18,58 @@ import {
  * working, but new code should import rules from `@/data`.
  */
 export {
+  BASE_CURRENCY,
+  CURRENCY,
+  DEFAULT_LOCALE,
+  DEFAULT_LOCALE_KEY,
   FREE_SHIPPING_THRESHOLD,
+  FX_RATES,
+  LOCALES,
+  LOCALE_KEYS,
   STANDARD_SHIPPING,
   EXPRESS_SHIPPING,
   PROMO_CODES,
   WELCOME_PROMO_CODE,
+  isLocaleKey,
+  localeConfig,
+  type CurrencyCode,
+  type LocaleConfig,
+  type LocaleKey,
   type ShippingMethodId,
   type PaymentMethodId,
 } from '@/data/commerce'
 
-export function formatEUR(value: number): string {
-  return new Intl.NumberFormat(MONEY_LOCALE, {
-    style: 'currency',
-    currency: CURRENCY,
-  }).format(value)
-}
-
 /** Rounds to the currency's minor unit, avoiding float drift on money maths. */
 export function roundMoney(value: number): number {
   return Math.round(value * MONEY_SCALE) / MONEY_SCALE
+}
+
+/** Converts an amount held in `BASE_CURRENCY` into `currency`. */
+export function convertMoney(value: number, currency: CurrencyCode): number {
+  return roundMoney(value * FX_RATES[currency])
+}
+
+/**
+ * Renders an amount held in `BASE_CURRENCY` (database, cart and API values are
+ * all base amounts) in the given locale's currency.
+ */
+export function formatMoney(
+  value: number,
+  locale: Pick<LocaleConfig, 'tag' | 'currency'> = DEFAULT_LOCALE
+): string {
+  return new Intl.NumberFormat(locale.tag, {
+    style: 'currency',
+    currency: locale.currency,
+  }).format(convertMoney(value, locale.currency))
+}
+
+/** `Intl` formatter for an explicit locale, for callers that need the object. */
+export function moneyFormatter(locale: Pick<LocaleConfig, 'tag' | 'currency'>) {
+  const formatter = new Intl.NumberFormat(locale.tag, {
+    style: 'currency',
+    currency: locale.currency,
+  })
+  return (value: number) => formatter.format(convertMoney(value, locale.currency))
 }
 
 /** Extract a per-kg price from a size label like "1 kg" / "2.5 kg" / "500 g" / "10 × 30 g". */
@@ -81,9 +116,12 @@ export function ratingDistribution(average: number, count: number) {
   }))
 }
 
-export function estimatedDeliveryText(method: 'standard' | 'express'): string {
+export function estimatedDeliveryText(
+  method: 'standard' | 'express',
+  locale: string = DATE_LOCALE
+): string {
   const fmt = (d: Date) =>
-    d.toLocaleDateString(DATE_LOCALE, {
+    d.toLocaleDateString(locale, {
       weekday: 'short',
       day: 'numeric',
       month: 'short',

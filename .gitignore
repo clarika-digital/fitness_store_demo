@@ -1,7 +1,7 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
-node_modules
+# ---------------------------------------------------------------------------
+# Dependencies
+# ---------------------------------------------------------------------------
+node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -10,48 +10,129 @@ node_modules
 !.yarn/releases
 !.yarn/versions
 
-# testing
-/coverage
+# bun.lock / package-lock.json / pnpm-lock.yaml are intentionally NOT ignored.
+# Lockfiles must be committed or installs are not reproducible.
 
-# next.js
+# ---------------------------------------------------------------------------
+# Next.js
+# ---------------------------------------------------------------------------
+# Build output, Turbopack/webpack cache, trace files and the standalone copy
+# that scripts/copy-standalone.mjs writes.
 /.next/
 /out/
+/build/
+next-env.d.ts
 
-# production
-/build
+# ---------------------------------------------------------------------------
+# TypeScript
+# ---------------------------------------------------------------------------
+*.tsbuildinfo
+tsconfig.tsbuildinfo
 
-# misc
-.DS_Store
-*.pem
-
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# env files (can opt-in for committing if needed)
+# ---------------------------------------------------------------------------
+# Environment / secrets
+# ---------------------------------------------------------------------------
+# .env.example is the committed template; every other .env* stays local.
 .env*
 !.env.example
 
-# vercel
+# ---------------------------------------------------------------------------
+# Prisma / SQLite
+# ---------------------------------------------------------------------------
+# The schema, seed and migrations ARE committed. Only the local database
+# files are not.
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+prisma/*.db
+/prisma/*.db-journal
+
+# ---------------------------------------------------------------------------
+# Test / coverage output
+# ---------------------------------------------------------------------------
+/coverage/
+/.nyc_output/
+/playwright-report/
+/test-results/
+/blob-report/
+/.playwright/
+
+# NOTE: `test` and `tests` are deliberately NOT ignored. tests/ contains
+# tracked runtime-build scripts. A bare `test` pattern would silently swallow
+# any fixture directory or file with that name at any depth.
+
+# ---------------------------------------------------------------------------
+# Production / deploy
+# ---------------------------------------------------------------------------
 .vercel
+.netlify
+.wrangler
+*.pem
+*.p12
+*.pfx
 
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
-local-*
-.claude
-.z-ai-config
+# ---------------------------------------------------------------------------
+# Logs & runtime scratch
+# ---------------------------------------------------------------------------
+# Covers dev.log, dev.out.log, server.log and any new log name.
 *.log
-dev.log
-dev.out.log
-test
-prompt
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+bun-debug.log*
 
-server.log
-# launcher output from scripts/run-next.mjs
+# Launcher output from scripts/run-next.mjs
 /logs/
-# Skills directory
+
+# Root-anchored scratch files only. A bare `local-*` would also match a real
+# source file such as src/local-utils.ts.
+/local-*
+/tmp/
+/temp/
+.cache/
+
+# ---------------------------------------------------------------------------
+# Editor & OS
+# ---------------------------------------------------------------------------
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+.fleet/
+*.swp
+*.swo
+*~
+
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+desktop.ini
+$RECYCLE.BIN/
+*.lnk
+*.stackdump
+
+# ---------------------------------------------------------------------------
+# Local agent / tooling config
+# ---------------------------------------------------------------------------
+# Root-anchored so a nested folder with the same name is never hidden.
+/.claude/
+/.z-ai-config/
 /skills/
+
+# ---------------------------------------------------------------------------
+# Merge / patch leftovers
+# ---------------------------------------------------------------------------
+*.orig
+*.rej
+*.bak
+*.tmp

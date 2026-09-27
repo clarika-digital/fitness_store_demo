@@ -17,8 +17,8 @@ import {
   useCartStore,
   type CartItem,
 } from '@/store/cart-store'
-import { useNavStore } from '@/store/nav-store'
-import { formatEUR } from '@/lib/format'
+import { useNavigate } from '@/hooks/use-nav'
+import { useMoney } from '@/hooks/use-money'
 import { Icon, ProductThumbnail, QuantityStepper } from '@/core'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
@@ -33,6 +33,7 @@ import {
 import { cn } from '@/lib/utils'
 
 function CartRow({ item }: { item: CartItem }) {
+  const money = useMoney()
   const setQty = useCartStore((s) => s.setQty)
   const remove = useCartStore((s) => s.remove)
   const key = cartKey(item)
@@ -73,7 +74,7 @@ function CartRow({ item }: { item: CartItem }) {
 
       <div className="flex shrink-0 flex-col items-end justify-between">
         <span className="text-sm font-bold text-zinc-900">
-          {formatEUR(item.unitPrice * item.quantity)}
+          {money(item.unitPrice * item.quantity)}
         </span>
         <Button
           variant="ghost"
@@ -90,10 +91,11 @@ function CartRow({ item }: { item: CartItem }) {
 }
 
 export function CartDrawer() {
+  const money = useMoney()
   const items = useCartStore((s) => s.items)
   const isOpen = useCartStore((s) => s.isOpen)
   const close = useCartStore((s) => s.close)
-  const navigate = useNavStore((s) => s.navigate)
+  const navigate = useNavigate()
 
   const count = cartCount(items)
   const subtotal = cartSubtotal(items)
@@ -140,7 +142,7 @@ export function CartDrawer() {
           ) : (
             <div className="space-y-2" aria-live="polite">
               <p className="text-sm font-medium text-zinc-600">
-                {CART_COPY.freeShippingRemaining(formatEUR(Math.max(0, remaining)))}
+                {CART_COPY.freeShippingRemaining(money(Math.max(0, remaining)))}
               </p>
               <Progress value={progress} aria-label={CART_COPY.progressAriaLabel} />
             </div>
@@ -181,11 +183,11 @@ export function CartDrawer() {
                     {CART_COPY.subtotal}
                   </span>
                   <span className="text-base font-bold text-zinc-900">
-                    {formatEUR(subtotal)}
+                    {money(subtotal)}
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {CART_COPY.shippingNote}
+                  {CART_COPY.shippingNote(money)}
                 </p>
                 <Button
                   onClick={goCheckout}

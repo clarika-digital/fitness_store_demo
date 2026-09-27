@@ -34,9 +34,10 @@ import {
   checkoutFieldErrorId,
 } from '@/data/validation'
 import { cartSubtotal, useCartStore } from '@/store/cart-store'
-import { useNavStore } from '@/store/nav-store'
+import { useNavigate } from '@/hooks/use-nav'
 import { submitCheckout } from '@/lib/api-client'
-import { formatEUR, roundMoney } from '@/lib/format'
+import { roundMoney } from '@/lib/format'
+import { useMoney } from '@/hooks/use-money'
 import type { CheckoutPayload } from '@/lib/types'
 import { Icon, ProductThumbnail } from '@/core'
 import { Button } from '@/components/ui/button'
@@ -128,7 +129,7 @@ function StepsIndicator() {
 }
 
 function EmptyCartCard() {
-  const navigate = useNavStore((s) => s.navigate)
+  const navigate = useNavigate()
   return (
     <div className="mx-auto w-full max-w-md px-4 py-16 sm:py-24">
       <Card className="text-center">
@@ -162,9 +163,10 @@ function optionBorder(selected: boolean) {
 }
 
 export function CheckoutView() {
+  const money = useMoney()
   const items = useCartStore((s) => s.items)
   const clear = useCartStore((s) => s.clear)
-  const navigate = useNavStore((s) => s.navigate)
+  const navigate = useNavigate()
   const { toast } = useToast()
 
   const [form, setForm] = useState<FormState>(EMPTY_FORM)
@@ -477,7 +479,7 @@ export function CheckoutView() {
                       </span>
                     ) : (
                       <span className="text-sm font-extrabold text-zinc-900">
-                        {formatEUR(method.cost)}
+                        {money(method.cost)}
                       </span>
                     )}
                   </Label>
@@ -564,7 +566,7 @@ export function CheckoutView() {
                       </p>
                     </div>
                     <span className="shrink-0 text-sm font-bold text-zinc-900">
-                      {formatEUR(item.unitPrice * item.quantity)}
+                      {money(item.unitPrice * item.quantity)}
                     </span>
                   </li>
                 ))}
@@ -575,7 +577,7 @@ export function CheckoutView() {
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">{CHECKOUT_COPY.subtotal}</span>
                 <span className="font-semibold text-zinc-900">
-                  {formatEUR(subtotal)}
+                  {money(subtotal)}
                 </span>
               </div>
 
@@ -623,7 +625,7 @@ export function CheckoutView() {
                   </span>
                   <span className="font-semibold text-primary">
                     {CHECKOUT_COPY.discountPrefix}
-                    {formatEUR(discount)}
+                    {money(discount)}
                   </span>
                 </div>
               )}
@@ -638,7 +640,7 @@ export function CheckoutView() {
                   <span className="font-extrabold text-primary">{CHECKOUT_COPY.free}</span>
                 ) : (
                   <span className="font-semibold text-zinc-900">
-                    {formatEUR(shippingCost)}
+                    {money(shippingCost)}
                   </span>
                 )}
               </div>
@@ -650,7 +652,7 @@ export function CheckoutView() {
                   {CHECKOUT_COPY.total}
                 </span>
                 <span className="text-lg font-extrabold text-zinc-900">
-                  {formatEUR(total)}
+                  {money(total)}
                 </span>
               </div>
 
@@ -674,7 +676,7 @@ export function CheckoutView() {
                     {CHECKOUT_COPY.placingOrder}
                   </>
                 ) : (
-                  CHECKOUT_COPY.placeOrder(formatEUR(total))
+                  CHECKOUT_COPY.placeOrder(money(total))
                 )}
               </Button>
 

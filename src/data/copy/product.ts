@@ -1,6 +1,11 @@
 /** Copy for the product detail page, purchase panel and review section. */
 
-import { FREE_SHIPPING_THRESHOLD } from '../commerce'
+import {
+  EXPRESS_SHIPPING,
+  FREE_SHIPPING_THRESHOLD,
+  STANDARD_SHIPPING,
+  type MoneyFormat,
+} from '../commerce'
 import {
   BADGE_LABELS,
   RATING_OUT_OF,
@@ -25,7 +30,8 @@ export const PDP_ACCORDIONS_COPY = {
   nutrition: 'Nutrition (per 100 g)',
   usage: 'How to use',
   shipping: 'Shipping & returns',
-  shippingBody: `Free shipping over €${FREE_SHIPPING_THRESHOLD} · Standard €4.90 (2–4 days) · Express €9.90 (next day) · 30-day returns`,
+  shippingBody: (money: MoneyFormat) =>
+    `Free shipping over ${money(FREE_SHIPPING_THRESHOLD)} · Standard ${money(STANDARD_SHIPPING)} (2–4 days) · Express ${money(EXPRESS_SHIPPING)} (next day) · 30-day returns`,
   openByDefault: 'description',
 } as const
 

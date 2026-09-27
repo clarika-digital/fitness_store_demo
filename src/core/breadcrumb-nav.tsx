@@ -1,6 +1,6 @@
 'use client'
 
-import { useNavStore } from '@/store/nav-store'
+import { useNavigate } from '@/hooks/use-nav'
 import type { View } from '@/lib/types'
 import { BREADCRUMB_COPY } from '@/data/copy/chrome'
 import { Icon } from './icon'
@@ -23,7 +23,7 @@ export function BreadcrumbNav({
   items: BreadcrumbItem[]
   className?: string
 }) {
-  const navigate = useNavStore((s) => s.navigate)
+  const navigate = useNavigate()
 
   return (
     <nav aria-label={BREADCRUMB_COPY.ariaLabel} className={cn('mb-3', className)}>

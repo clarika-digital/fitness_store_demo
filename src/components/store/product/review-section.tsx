@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import { DATE_LOCALE } from '@/data/commerce'
+import { useLocale } from '@/hooks/use-money'
 import { GLYPH_COPY } from '@/data/copy/chrome'
 import { REVIEW_SECTION_COPY } from '@/data/copy/product'
 import { TOP_FLAVORS_LIMIT } from '@/data/products'
@@ -12,6 +12,7 @@ import { Progress } from '@/components/ui/progress'
 import { cn } from '@/lib/utils'
 
 export function ReviewSection({ product }: { product: ProductDetailData }) {
+  const locale = useLocale()
   const { average, count, distribution, items } = product.reviews
 
   const dist = useMemo(
@@ -64,7 +65,7 @@ export function ReviewSection({ product }: { product: ProductDetailData }) {
             <RatingStars rating={average} size={16} />
           </div>
           <p className="mt-1.5 text-sm text-zinc-500">
-            {REVIEW_SECTION_COPY.reviewsCount(count.toLocaleString(DATE_LOCALE))}
+            {REVIEW_SECTION_COPY.reviewsCount(count.toLocaleString(locale.tag))}
           </p>
 
           <div className="mt-5 flex flex-col gap-2.5">
@@ -102,7 +103,7 @@ export function ReviewSection({ product }: { product: ProductDetailData }) {
                   <span className="flex shrink-0 items-center gap-1.5">
                     <RatingStars rating={f.rating ?? 0} size={11} />
                     <span className="text-xs tabular-nums text-zinc-500">
-                      ({(f.reviewCount ?? 0).toLocaleString(DATE_LOCALE)})
+                      ({(f.reviewCount ?? 0).toLocaleString(locale.tag)})
                     </span>
                   </span>
                 </li>
@@ -145,7 +146,7 @@ export function ReviewSection({ product }: { product: ProductDetailData }) {
                   )}
                   <span aria-hidden>{GLYPH_COPY.separator}</span>
                   <time dateTime={r.createdAt}>
-                    {new Date(r.createdAt).toLocaleDateString(DATE_LOCALE)}
+                    {new Date(r.createdAt).toLocaleDateString(locale.tag)}
                   </time>
                 </div>
               </li>

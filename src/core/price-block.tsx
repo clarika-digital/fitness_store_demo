@@ -1,6 +1,6 @@
 'use client'
 
-import { formatEUR } from '@/lib/format'
+import { useMoney } from '@/hooks/use-money'
 import { PRODUCT_CARD_COPY } from '@/data/copy/product'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
@@ -24,6 +24,7 @@ export function PriceBlock({
   size?: 'sm' | 'md' | 'lg'
   className?: string
 }) {
+  const money = useMoney()
   const hasCompare = Boolean(comparePrice && comparePrice > price)
   const derivedSaving = hasCompare ? Math.round((comparePrice! - price) * 100) / 100 : null
   const discount = saving ?? derivedSaving
@@ -38,7 +39,7 @@ export function PriceBlock({
           size === 'sm' && 'text-sm'
         )}
       >
-        {formatEUR(price)}
+        {money(price)}
       </span>
       {hasCompare && (
         <span
@@ -47,7 +48,7 @@ export function PriceBlock({
             size === 'lg' ? 'text-base' : 'text-xs'
           )}
         >
-          {formatEUR(comparePrice!)}
+          {money(comparePrice!)}
         </span>
       )}
       {discount && (
@@ -59,7 +60,7 @@ export function PriceBlock({
               : 'bg-zinc-900 text-xs hover:bg-zinc-900'
           )}
         >
-          {PRODUCT_CARD_COPY.savePrefix} {formatEUR(discount)}
+          {PRODUCT_CARD_COPY.savePrefix} {money(discount)}
         </Badge>
       )}
     </div>

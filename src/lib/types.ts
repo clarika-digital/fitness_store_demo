@@ -1,4 +1,4 @@
-// Shared types & API contracts for the FUELD storefront.
+// Shared types & API contracts for the Clarika Fitness storefront.
 // All views consume these shapes; all API routes must produce them.
 
 export type ProductSize = {

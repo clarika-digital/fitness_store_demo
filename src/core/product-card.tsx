@@ -2,15 +2,17 @@
 
 import Image from 'next/image'
 import { ShoppingCart } from 'lucide-react'
-import { useNavStore } from '@/store/nav-store'
+import { useNavigate } from '@/hooks/use-nav'
 import { useCartStore } from '@/store/cart-store'
 import { useToast } from '@/hooks/use-toast'
-import { formatEUR, perKg } from '@/lib/format'
+import { perKg } from '@/lib/format'
+import { useLocale, useMoney } from '@/hooks/use-money'
 import type { ProductCardData } from '@/lib/types'
 import {
   NO_FLAVOR_LABEL,
   PRODUCT_CARD_COPY,
   QUICK_ADD_FLAVOR_LABEL,
+  UNIT_LABELS,
 } from '@/data'
 import { IMAGE_SIZES } from '@/data/images'
 import { RatingStars } from './rating-stars'
@@ -26,11 +28,13 @@ export function ProductCard({
   product: ProductCardData
   className?: string
 }) {
-  const navigate = useNavStore((s) => s.navigate)
+  const navigate = useNavigate()
   const add = useCartStore((s) => s.add)
   const openCart = useCartStore((s) => s.open)
   const { toast } = useToast()
 
+  const money = useMoney()
+  const locale = useLocale()
   const size = product.sizes[0]
   const kg = size ? perKg(size) : null
   const saving =
@@ -64,7 +68,7 @@ export function ProductCard({
       aria-label={PRODUCT_CARD_COPY.ariaLabel(
         product.brand,
         product.name,
-        formatEUR(product.priceFrom)
+        money(product.priceFrom)
       )}
       onClick={() => navigate({ name: 'product', slug: product.slug })}
       onKeyDown={(e) => {
@@ -94,7 +98,7 @@ export function ProductCard({
           )}
           {saving && (
             <Badge className="bg-zinc-900 text-[10px] font-bold text-white hover:bg-zinc-900">
-              {PRODUCT_CARD_COPY.savePrefix} {formatEUR(saving)}
+              {PRODUCT_CARD_COPY.savePrefix} {money(saving)}
             </Badge>
           )}
         </div>
@@ -116,7 +120,7 @@ export function ProductCard({
             <RatingStars rating={product.rating} size={11} />
             <span className="font-medium text-zinc-700">{product.rating.toFixed(1)}</span>
             <span className="hidden text-zinc-400 sm:inline">
-              ({product.reviewCount.toLocaleString()})
+              ({product.reviewCount.toLocaleString(locale.tag)})
             </span>
           </span>
         </div>
@@ -130,16 +134,16 @@ export function ProductCard({
             <div>
               <div className="flex items-baseline gap-1.5">
                 <span className="text-base font-extrabold text-zinc-900">
-                  {formatEUR(product.priceFrom)}
+                  {money(product.priceFrom)}
                 </span>
                 {product.compareFrom && product.compareFrom > product.priceFrom && (
                   <span className="text-xs text-zinc-400 line-through">
-                    {formatEUR(product.compareFrom)}
+                    {money(product.compareFrom)}
                   </span>
                 )}
               </div>
               <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[11px] text-zinc-500">
-                {kg && <span>{formatEUR(kg)} / kg</span>}
+                {kg && <span>{money(kg)}{UNIT_LABELS.perKg}</span>}
                 {product.flavorCount > 1 && (
                   <span>{PRODUCT_CARD_COPY.flavorCount(product.flavorCount)}</span>
                 )}

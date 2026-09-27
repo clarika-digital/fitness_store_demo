@@ -6,4 +6,5 @@
  */
 export const STORAGE_KEYS = {
   cart: 'fueld-cart',
+  locale: 'fueld-locale',
 } as const
